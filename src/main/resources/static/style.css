@@ -1,0 +1,686 @@
+/* SETĂRI GENERALE */
+:root {
+    --bg-dark: #0f172a;
+    --bg-hover: #1e293b;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent: #3b82f6;
+    --sidebar-collapsed: 80px;
+    --sidebar-expanded: 260px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f1f5f9;
+    display: flex;
+}
+
+/* SIDEBAR-UL */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-collapsed);
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    z-index: 1000;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar:hover { width: var(--sidebar-expanded); }
+
+/* HEADER SIDEBAR */
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    height: 80px;
+    padding: 0 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    text-decoration: none;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.sidebar-header:hover {
+    color: var(--text-main);
+    background-color: var(--bg-hover);
+}
+
+.sidebar-header i {
+    min-width: 50px;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.sidebar-header .logo-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* FOOTER SIDEBAR */
+.sidebar-footer {
+    padding: 15px;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-footer .small-text {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* MENIUL DE NAVIGARE */
+.nav-links {
+    list-style: none;
+    padding: 20px 0;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.nav-links li { margin-bottom: 5px; }
+
+.nav-links a {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    text-decoration: none;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-links a:hover {
+    color: var(--text-main);
+    background-color: var(--bg-hover);
+}
+
+.nav-links a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background-color: var(--accent);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.nav-links a:hover::before { transform: scaleY(1); }
+
+.nav-links i {
+    min-width: 50px;
+    text-align: center;
+    font-size: 1.25rem;
+}
+
+.nav-links .text {
+    white-space: nowrap;
+    font-size: 1rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .sidebar-header .logo-text,
+.sidebar:hover .nav-links .text,
+.sidebar:hover .sidebar-footer .small-text {
+    opacity: 1;
+    transition-delay: 0.1s;
+}
+
+/* CONȚINUTUL PRINCIPAL */
+.main-content {
+    margin-left: var(--sidebar-collapsed);
+    padding: 40px;
+    width: 100%;
+    transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar:hover ~ .main-content {
+    margin-left: var(--sidebar-expanded);
+}
+
+/* =========================================
+   STILURI PREMIUM PROFIL (INTEGRAT CU TEMA)
+   ========================================= */
+
+.profile-dashboard-wrapper {
+    max-width: 1200px;
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+}
+
+/* Panoul principal exterior (Culoarea Hover-ului din Sidebar) */
+.premium-dark-panel {
+    background-color: var(--bg-hover);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 35px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ROW 1: Profil + Contact */
+.profile-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.user-identity {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    background-color: rgba(0, 0, 0, 0.2); /* Transparenta pe fundalul panoului */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    color: var(--text-main);
+}
+
+.user-titles h2 {
+    font-size: 1.6rem;
+    margin: 0 0 5px 0;
+    font-weight: 600;
+}
+
+.role-text {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    letter-spacing: 0.5px;
+}
+
+.user-contacts {
+    display: flex;
+    gap: 50px;
+}
+
+.contact-block {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.contact-label {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.contact-value {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+/* ROW 2: Statistici interioare */
+.mini-stats-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.inner-stat-card {
+    flex: 1;
+    min-width: 220px;
+    background-color: rgba(0, 0, 0, 0.2); /* Overlay întunecat pentru adâncime */
+    border-radius: 16px;
+    padding: 20px 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.2s ease;
+}
+
+.inner-stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.3rem;
+}
+
+.icon-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.icon-green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+.icon-red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+.stat-text-wrap h3 {
+    font-size: 1.5rem;
+    margin: 0 0 2px 0;
+    font-weight: 600;
+}
+
+.stat-text-wrap p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Securitate */
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.section-title h2 {
+    font-size: 1.3rem;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.accent-line {
+    width: 6px;
+    height: 25px;
+    background-color: #34d399; /* Accent verde deschis */
+    border-radius: 4px;
+}
+
+.security-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 25px 30px;
+}
+
+.sec-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.sec-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4rem;
+    color: var(--text-muted);
+}
+
+.sec-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.15rem;
+}
+
+.sec-info p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.btn-premium {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-premium:hover {
+    background-color: #2563eb;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* POP-UP TOAST */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #ef4444;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    transform: translateX(150%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 9999;
+}
+
+.toast.show {
+    transform: translateX(0);
+}
+
+.toast.success {
+    background: #10b981;
+}
+/* =========================================
+   POP-UP (MODAL) PENTRU PAROLĂ
+   ========================================= */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75); /* Fundal estompat */
+    display: none; /* Ascuns implicit */
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    backdrop-filter: blur(4px); /* Efect modern de ceață */
+}
+
+/* Clasa care face modalul vizibil */
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 20px;
+    padding: 30px;
+    /* Moștenește background-ul și umbra din .premium-dark-panel */
+}
+
+.input-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.input-group input {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--text-main);
+    outline: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.3s ease;
+}
+
+.input-group input:focus {
+    border-color: var(--accent);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-cancel {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 10px 15px;
+    transition: color 0.3s ease;
+}
+
+.btn-cancel:hover {
+    color: var(--text-main);
+}
+/* =========================================
+   STILURI DASHBOARD (GRAFICE & TABEL)
+   ========================================= */
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.year-filter {
+    background: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.year-filter select, #judetEvolutieSelect {
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+}
+
+.charts-row {
+    display: flex;
+    gap: 25px;
+    flex-wrap: wrap;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    flex: 1;
+    min-width: 300px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+}
+
+.full-width { width: 100%; }
+
+.chart-card h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    color: var(--bg-dark);
+}
+
+/* Tabel */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th, .data-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.data-table th {
+    background-color: #f8fafc;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.badge-scazut { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.badge-mediu { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.badge-ridicat { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+.trend-up { color: #ef4444; font-weight: 600; } /* Roșu la creștere criminalitate (Rău) */
+.trend-down { color: #10b981; font-weight: 600; } /* Verde la scădere criminalitate (Bine) */
+.trend-neutral { color: var(--text-muted); }
+
+/* =========================================
+   STILURI ABONAMENTE (AUTO-COMPLETE & BADGES)
+   ========================================= */
+.search-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-container input {
+    width: 100%;
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.search-container input:focus {
+    border-color: var(--accent);
+}
+
+.autocomplete-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-hover);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    display: none; /* Ascuns implicit */
+}
+
+.autocomplete-results li {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    transition: background 0.2s;
+    font-size: 0.95rem;
+}
+
+.autocomplete-results li:hover {
+    background: rgba(59, 130, 246, 0.15);
+}
+
+.abonamente-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.abonament-badge {
+    background: rgba(59, 130, 246, 0.1);
+    color: #60a5fa;
+    padding: 10px 18px;
+    border-radius: 25px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    transition: all 0.3s ease;
+}
+
+.abonament-badge:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.abonament-badge i {
+    cursor: pointer;
+    color: #ef4444;
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+
+.abonament-badge i:hover {
+    transform: scale(1.2);
+}
+/* =========================================
+   STILURI PENTRU HARTA LEAFLET
+   ========================================= */
+.leaflet-popup-content-wrapper {
+    background: var(--bg-dark);
+    color: var(--text-main);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+.leaflet-popup-tip {
+    background: var(--bg-dark);
+}
+
+.popup-custom h3 {
+    margin: 0 0 5px 0;
+    color: #ef4444; /* Roșu alertă */
+    font-size: 1.1rem;
+}
+
+.popup-custom p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.popup-custom .data-incident {
+    font-size: 0.8rem;
+    color: #3b82f6;
+    font-weight: 600;
+}

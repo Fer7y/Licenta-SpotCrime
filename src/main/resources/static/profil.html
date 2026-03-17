@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profilul Meu - CrimeRate RO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+    <a href="profil.html" class="sidebar-header" id="profileHeaderBtn">
+        <i class="fa-solid fa-user"></i>
+        <span class="logo-text" id="profileHeaderText">Contul Meu</span>
+    </a>
+
+    <ul class="nav-links">
+        <li>
+            <a href="index.html">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span class="text">Dashboard</span>
+            </a>
+        </li>
+        <li id="logoutMenuItem">
+            <a href="#" onclick="logout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span class="text">Deconectare</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer">
+        <span class="small-text">CrimeRate RO</span>
+    </div>
+</nav>
+
+<main class="main-content" style="background-color: var(--bg-dark); min-height: 100vh; padding: 40px;">
+
+    <div class="profile-dashboard-wrapper">
+
+        <div class="premium-dark-panel">
+
+            <div class="profile-info-row">
+                <div class="user-identity">
+                    <div class="avatar-circle">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="user-titles">
+                        <h2 id="profNume">Încărcare...</h2>
+                        <span class="role-text" id="profRol">CETĂȚEAN</span>
+                    </div>
+                </div>
+
+                <div class="user-contacts">
+                    <div class="contact-block">
+                        <span class="contact-label">Data Înregistrării</span>
+                        <span class="contact-value" id="profData">...</span>
+                    </div>
+                    <div class="contact-block">
+                        <span class="contact-label">Adresă Email</span>
+                        <span class="contact-value" id="profEmail">...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mini-stats-row">
+                <div class="inner-stat-card">
+                    <div class="stat-icon-wrap icon-blue">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </div>
+                    <div class="stat-text-wrap">
+                        <h3 id="statTotal">0</h3>
+                        <p>Total Raportate</p>
+                    </div>
+                </div>
+
+                <div class="inner-stat-card">
+                    <div class="stat-icon-wrap icon-green">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div class="stat-text-wrap">
+                        <h3 id="statConfirmate">0</h3>
+                        <p>Confirmate (Aprobate)</p>
+                    </div>
+                </div>
+
+                <div class="inner-stat-card">
+                    <div class="stat-icon-wrap icon-red">
+                        <i class="fa-solid fa-xmark"></i>
+                    </div>
+                    <div class="stat-text-wrap">
+                        <h3 id="statFalse">0</h3>
+                        <p>False (Respinse)</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="section-title">
+            <span class="accent-line"></span>
+            <h2>Alerte Localități</h2>
+        </div>
+        <div class="premium-dark-panel">
+            <p style="color: var(--text-muted); margin-top: 0; margin-bottom: 25px;">
+                Caută și adaugă orașele pentru care dorești să primești notificări privind criminalitatea.
+            </p>
+
+            <div class="search-container">
+                <input type="text" id="searchOras" placeholder="🔍 Caută un oraș (ex: București, Cluj...)" oninput="cautaOras(this.value)">
+                <ul id="searchResults" class="autocomplete-results"></ul>
+            </div>
+
+            <div id="listaAbonamente" class="abonamente-list">
+            </div>
+        </div>
+
+        <div class="section-title">
+            <span class="accent-line"></span>
+            <h2>Securitate & Setări</h2>
+        </div>
+        <div class="premium-dark-panel security-panel">
+            <div class="sec-info">
+                <div class="sec-icon"><i class="fa-solid fa-lock"></i></div>
+                <div>
+                    <h3>Parola contului</h3>
+                    <p>Actualizează-ți parola regulat pentru a menține contul în siguranță.</p>
+                </div>
+            </div>
+            <button class="btn-premium" onclick="arataModalParola()">Schimbă Parola</button>
+        </div>
+
+    </div>
+</main>
+
+<div id="parolaModal" class="modal-overlay">
+    <div class="modal-content premium-dark-panel">
+        <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 1.4rem; color: var(--text-muted);">Schimbare Parolă</h3>
+
+        <div class="input-group">
+            <label>Parola actuală</label>
+            <input type="password" id="oldPassword" placeholder="Introdu parola veche">
+        </div>
+
+        <div class="input-group">
+            <label>Parola nouă</label>
+            <input type="password" id="newPassword" placeholder="Creează o parolă nouă">
+        </div>
+
+        <div class="input-group">
+            <label>Confirmă parola nouă</label>
+            <input type="password" id="confirmPassword" placeholder="Repetă parola nouă">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="ascundeModalParola()">Anulează</button>
+            <button class="btn-premium" onclick="salveazaParola()">Salvează Modificarea</button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

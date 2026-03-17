@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Login / Register</title>
+    <style>
+        /* Un stil rapid și minimalist pentru pagina de login */
+        body { font-family: Arial, sans-serif; background: #ececec; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #2c3e50; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        button:hover { background: #34495e; }
+        .toggle-btn { text-align: center; margin-top: 15px; color: blue; cursor: pointer; font-size: 0.9rem; }
+
+        /* Stil pentru TOAST-ul nou */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ef4444;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            transform: translateX(150%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 9999;
+        }
+        .toast.show { transform: translateX(0); }
+        .toast.success { background: #10b981; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="loginFormContainer">
+    <h2>Autentificare</h2>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginParola" placeholder="Parola">
+    <button onclick="faceLogin()">Intră în cont</button>
+    <div class="toggle-btn" onclick="toggleForms()">Nu ai cont? Înregistrează-te</div>
+</div>
+
+<div class="container" id="registerFormContainer" style="display: none;">
+    <h2>Înregistrare</h2>
+    <input type="text" id="regNume" placeholder="Nume Complet">
+    <input type="email" id="regEmail" placeholder="Email">
+    <input type="password" id="regParola" placeholder="Parola">
+    <button onclick="faceRegister()">Creează cont</button>
+    <div class="toggle-btn" onclick="toggleForms()">Ai deja cont? Autentifică-te</div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

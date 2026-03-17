@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrimeRate RO - Dashboard</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+    <a href="profil.html" class="sidebar-header" id="profileHeaderBtn">
+        <i class="fa-solid fa-user"></i>
+        <span class="logo-text" id="profileHeaderText">Guest</span>
+    </a>
+
+    <ul class="nav-links">
+        <li>
+            <a href="index.html">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span class="text">Dashboard</span>
+            </a>
+        </li>
+
+        <li id="loginMenuItem">
+            <a href="login.html">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                <span class="text">Autentificare</span>
+            </a>
+        </li>
+
+        <li>
+            <a href="harta.html">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span class="text">Map</span>
+            </a>
+        </li>
+
+        <li id="logoutMenuItem" style="display: none;">
+            <a href="#" onclick="logout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span class="text">Deconectare</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer">
+        <span class="small-text">CrimeRate RO</span>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="dashboard-header">
+        <div>
+            <h2 id="welcomeMessage" style="display: none; color: var(--accent); margin-bottom: 5px; font-weight: 600;"></h2>
+            <h1>Dashboard Criminalitate</h1>
+            <p style="color: var(--text-muted); margin-top: 5px;">Analiza statisticilor oficiale din România</p>
+        </div>
+
+        <div class="year-filter">
+            <label for="globalYearSelect">Analiză pentru anul:</label>
+            <select id="globalYearSelect" onchange="incarcaDashboard()">
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2021">2021</option>
+                <option value="2020">2020</option>
+                <option value="2019">2019</option>
+                <option value="2018">2018</option>
+                <option value="2017">2017</option>
+                <option value="2016">2016</option>
+                <option value="2015">2015</option>
+                <option value="2014">2014</option>
+                <option value="2013">2013</option>
+                <option value="2012">2012</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="charts-row">
+        <div class="chart-card">
+            <h3>🔴 Top 5 Risc Ridicat</h3>
+            <canvas id="top5Chart" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>🟢 Top 5 Cele mai Sigure</h3>
+            <canvas id="bottom5Chart" height="200"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card full-width" style="margin-top: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3>📈 Evoluție Istorică</h3>
+            <select id="judetEvolutieSelect" onchange="incarcaGraficEvolutie()">
+                <option value="1">Alba</option>
+                <option value="42">București</option>
+            </select>
+        </div>
+        <canvas id="evolutieChart" height="100"></canvas>
+    </div>
+
+    <div class="chart-card full-width" style="margin-top: 25px;">
+        <h3>📊 Tabel Detaliat Județe (vs. Anul Precedent)</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Județ</th>
+                    <th>Coeficient</th>
+                    <th>Încadrare</th>
+                    <th>Trend (față de anul anterior)</th>
+                </tr>
+                </thead>
+                <tbody id="tabelJudeteBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

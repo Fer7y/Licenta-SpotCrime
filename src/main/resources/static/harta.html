@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harta Criminalității - CrimeRate RO</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+    <a href="profil.html" class="sidebar-header" id="profileHeaderBtn">
+        <i class="fa-solid fa-user"></i>
+        <span class="logo-text" id="profileHeaderText">Contul Meu</span>
+    </a>
+
+    <ul class="nav-links">
+        <li>
+            <a href="index.html">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span class="text">Dashboard</span>
+            </a>
+        </li>
+        <li>
+            <a href="harta.html">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span class="text">Harta Interactivă</span>
+            </a>
+        </li>
+        <li id="logoutMenuItem">
+            <a href="#" onclick="logout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span class="text">Deconectare</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer">
+        <span class="small-text">CrimeRate RO</span>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="dashboard-header">
+        <div>
+            <h1>Harta Interactivă a Criminalității</h1>
+            <p style="color: var(--text-muted); margin-top: 5px;">Explorează zonele de risc și incidentele raportate de cetățeni.</p>
+        </div>
+
+        <div class="year-filter">
+            <label for="hartaYearSelect">Coeficienți oficiali pentru:</label>
+            <select id="hartaYearSelect" onchange="incarcaDateHarta()">
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="premium-dark-panel" style="padding: 15px;">
+        <div id="map" style="height: 650px; width: 100%; border-radius: 12px; z-index: 1;"></div>
+    </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

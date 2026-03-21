@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raportează Incident - CrimeRate RO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav class="sidebar" id="sidebar">
+    <a href="profil.html" class="sidebar-header" id="profileHeaderBtn">
+        <i class="fa-solid fa-user"></i>
+        <span class="logo-text" id="profileHeaderText">Contul Meu</span>
+    </a>
+
+    <ul class="nav-links">
+        <li>
+            <a href="index.html">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span class="text">Dashboard</span>
+            </a>
+        </li>
+        <li>
+            <a href="harta.html">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span class="text">Harta Interactivă</span>
+            </a>
+        </li>
+        <li>
+            <a href="raportare.html" style="color: var(--accent);">
+                <i class="fa-solid fa-bullhorn"></i>
+                <span class="text">Raportează Incident</span>
+            </a>
+        </li>
+        <li id="logoutMenuItem">
+            <a href="#" onclick="logout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span class="text">Deconectare</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="sidebar-footer">
+        <span class="small-text">CrimeRate RO</span>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="dashboard-header">
+        <div>
+            <h1 style="color: var(--bg-dark);">Raportează un Incident</h1>
+            <p style="color: var(--text-muted); margin-top: 5px;">Ajută comunitatea raportând incidentele la care ai fost martor.</p>
+        </div>
+    </div>
+
+    <div class="premium-dark-panel" style="max-width: 800px; margin: 0 auto; padding: 30px;">
+
+        <div class="input-group">
+            <label style="color: var(--text-main);">Tip Infracțiune <span style="color: #ef4444;">*</span></label>
+            <select id="rapTip" style="width: 100%; padding: 15px 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.25); color: var(--text-main); font-family: 'Inter'; font-size: 1rem; outline: none;">
+                <option value="" style="color: black;">Alege tipul infracțiunii...</option>
+                <option value="Furt" style="color: black;">Furt</option>
+                <option value="Tâlhărie" style="color: black;">Tâlhărie</option>
+                <option value="Furt din auto" style="color: black;">Furt din auto</option>
+                <option value="Vandalism" style="color: black;">Vandalism / Distrugere</option>
+                <option value="Violență" style="color: black;">Agresiune fizică</option>
+                <option value="Tulburarea liniștii" style="color: black;">Tulburarea liniștii publice</option>
+                <option value="Altele" style="color: black;">Altele</option>
+            </select>
+        </div>
+
+        <div class="input-group" style="margin-top: 20px;">
+            <label style="color: var(--text-main);">Oraș / Localitate <span style="color: #ef4444;">*</span></label>
+            <div class="search-container">
+                <input type="text" id="rapSearchOras" placeholder="🔍 Caută orașul..." oninput="cautaOrasRaportare(this.value)">
+                <ul id="rapSearchResults" class="autocomplete-results"></ul>
+            </div>
+            <input type="hidden" id="rapLocalitateId">
+            <p id="rapOrasSelectatText" style="color: #10b981; font-size: 0.95rem; display: none; margin-top: 5px; font-weight: 500;"><i class="fa-solid fa-check-circle"></i> Oraș selectat: <span></span></p>
+        </div>
+
+        <div class="input-group" style="margin-top: 20px;">
+            <label style="color: var(--text-main);">Selectează locația exactă pe hartă <span style="color: #ef4444;">*</span></label>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">Dă click pe hartă pentru a plasa pioneza roșie exact în locul incidentului.</p>
+
+            <div id="miniMap" style="height: 350px; width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); z-index: 1;"></div>
+
+            <input type="hidden" id="rapLat">
+            <input type="hidden" id="rapLng">
+        </div>
+
+        <div class="input-group" style="margin-top: 20px;">
+            <label style="color: var(--text-main);">Descriere suplimentară (Opțional)</label>
+            <textarea id="rapDescriere" rows="4" placeholder="Oferă mai multe detalii despre ce s-a întâmplat..." style="width: 100%; padding: 15px 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.25); color: var(--text-main); font-family: 'Inter'; font-size: 1rem; outline: none; resize: vertical;"></textarea>
+        </div>
+
+        <button class="btn-premium" style="width: 100%; margin-top: 30px; padding: 15px; font-size: 1.1rem;" onclick="trimiteRaport()">
+            <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Trimite Raportul
+        </button>
+    </div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

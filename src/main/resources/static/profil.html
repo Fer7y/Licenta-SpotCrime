@@ -4,9 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profilul Meu - CrimeRate RO</title>
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* Ne asigurăm că Bootstrap nu ne strică input-urile și butoanele din modal */
+        input:focus { box-shadow: none !important; }
+    </style>
 </head>
 <body>
 
@@ -23,6 +32,18 @@
                 <span class="text">Dashboard</span>
             </a>
         </li>
+        <li>
+            <a href="harta.html">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span class="text">Map</span>
+            </a>
+        </li>
+        <li>
+            <a href="raportare.html">
+                <i class="fa-solid fa-bullhorn"></i>
+                <span class="text">Raportează Incident</span>
+            </a>
+        </li>
         <li id="logoutMenuItem">
             <a href="#" onclick="logout()">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -36,100 +57,109 @@
     </div>
 </nav>
 
-<main class="main-content" style="background-color: var(--bg-dark); min-height: 100vh; padding: 40px;">
+<main class="main-content" style="background-color: var(--bg-dark); min-height: 100vh; padding: 40px; color: var(--text-main);">
 
-    <div class="profile-dashboard-wrapper">
+    <div class="container-fluid p-0" style="max-width: 1200px;">
 
-        <div class="premium-dark-panel">
+        <div class="premium-dark-panel p-4 p-md-5 mb-5">
 
-            <div class="profile-info-row">
-                <div class="user-identity">
-                    <div class="avatar-circle">
+            <div class="row align-items-center mb-5">
+                <div class="col-md-6 d-flex align-items-center gap-3 mb-4 mb-md-0">
+                    <div class="avatar-circle" style="width: 80px; height: 80px; background-color: rgba(255,255,255,0.05); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; border: 1px solid rgba(255,255,255,0.1);">
                         <i class="fa-solid fa-user"></i>
                     </div>
-                    <div class="user-titles">
-                        <h2 id="profNume">Încărcare...</h2>
-                        <span class="role-text" id="profRol">CETĂȚEAN</span>
+                    <div>
+                        <h2 id="profNume" class="mb-1 fw-bold fs-3">Încărcare...</h2>
+                        <span id="profRol" style="color: var(--text-muted); font-size: 0.95rem; letter-spacing: 1px;">CETĂȚEAN</span>
                     </div>
                 </div>
 
-                <div class="user-contacts">
-                    <div class="contact-block">
-                        <span class="contact-label">Data Înregistrării</span>
-                        <span class="contact-value" id="profData">...</span>
+                <div class="col-md-6 d-flex justify-content-md-end gap-4 gap-md-5">
+                    <div class="d-flex flex-column">
+                        <span style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">Data Înregistrării</span>
+                        <span id="profData" class="fw-medium">...</span>
                     </div>
-                    <div class="contact-block">
-                        <span class="contact-label">Adresă Email</span>
-                        <span class="contact-value" id="profEmail">...</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mini-stats-row">
-                <div class="inner-stat-card">
-                    <div class="stat-icon-wrap icon-blue">
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                    </div>
-                    <div class="stat-text-wrap">
-                        <h3 id="statTotal">0</h3>
-                        <p>Total Raportate</p>
-                    </div>
-                </div>
-
-                <div class="inner-stat-card">
-                    <div class="stat-icon-wrap icon-green">
-                        <i class="fa-solid fa-check"></i>
-                    </div>
-                    <div class="stat-text-wrap">
-                        <h3 id="statConfirmate">0</h3>
-                        <p>Confirmate (Aprobate)</p>
-                    </div>
-                </div>
-
-                <div class="inner-stat-card">
-                    <div class="stat-icon-wrap icon-red">
-                        <i class="fa-solid fa-xmark"></i>
-                    </div>
-                    <div class="stat-text-wrap">
-                        <h3 id="statFalse">0</h3>
-                        <p>False (Respinse)</p>
+                    <div class="d-flex flex-column">
+                        <span style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">Adresă Email</span>
+                        <span id="profEmail" class="fw-medium">...</span>
                     </div>
                 </div>
             </div>
 
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="inner-stat-card d-flex align-items-center gap-3 p-4" style="background: rgba(0,0,0,0.2); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="icon-blue" style="width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.3rem;">
+                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                        </div>
+                        <div>
+                            <h3 id="statTotal" class="mb-0 fw-bold fs-4">0</h3>
+                            <p class="mb-0" style="color: var(--text-muted); font-size: 0.85rem;">Total Raportate</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="inner-stat-card d-flex align-items-center gap-3 p-4" style="background: rgba(0,0,0,0.2); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="icon-green" style="width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.3rem;">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div>
+                            <h3 id="statConfirmate" class="mb-0 fw-bold fs-4">0</h3>
+                            <p class="mb-0" style="color: var(--text-muted); font-size: 0.85rem;">Confirmate (Aprobate)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-12">
+                    <div class="inner-stat-card d-flex align-items-center gap-3 p-4" style="background: rgba(0,0,0,0.2); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="icon-red" style="width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.3rem;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </div>
+                        <div>
+                            <h3 id="statFalse" class="mb-0 fw-bold fs-4">0</h3>
+                            <p class="mb-0" style="color: var(--text-muted); font-size: 0.85rem;">False (Respinse)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="section-title">
-            <span class="accent-line"></span>
-            <h2>Alerte Localități</h2>
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width: 6px; height: 25px; background-color: #34d399; border-radius: 4px;"></div>
+            <h2 class="m-0 fs-4 fw-semibold text-white">Alerte Localități</h2>
         </div>
-        <div class="premium-dark-panel">
-            <p style="color: var(--text-muted); margin-top: 0; margin-bottom: 25px;">
+
+        <div class="premium-dark-panel p-4 p-md-5 mb-5">
+            <p style="color: var(--text-muted); margin-bottom: 25px;">
                 Caută și adaugă orașele pentru care dorești să primești notificări privind criminalitatea.
             </p>
 
-            <div class="search-container">
-                <input type="text" id="searchOras" placeholder="🔍 Caută un oraș (ex: București, Cluj...)" oninput="cautaOras(this.value)">
+            <div class="search-container position-relative mb-4">
+                <input type="text" id="searchOras" class="w-100 p-3 rounded-3 border" style="background: rgba(0,0,0,0.25); border-color: rgba(255,255,255,0.1) !important; color: var(--text-main);" placeholder="🔍 Caută un oraș (ex: București, Cluj...)" oninput="cautaOras(this.value)">
                 <ul id="searchResults" class="autocomplete-results"></ul>
             </div>
 
-            <div id="listaAbonamente" class="abonamente-list">
+            <div id="listaAbonamente" class="abonamente-list d-flex flex-wrap gap-2">
             </div>
         </div>
 
-        <div class="section-title">
-            <span class="accent-line"></span>
-            <h2>Securitate & Setări</h2>
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <div style="width: 6px; height: 25px; background-color: #34d399; border-radius: 4px;"></div>
+            <h2 class="m-0 fs-4 fw-semibold text-white">Securitate & Setări</h2>
         </div>
-        <div class="premium-dark-panel security-panel">
-            <div class="sec-info">
-                <div class="sec-icon"><i class="fa-solid fa-lock"></i></div>
+
+        <div class="premium-dark-panel p-4 p-md-5 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4">
+            <div class="d-flex align-items-center gap-3">
+                <div style="width: 55px; height: 55px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; color: var(--text-muted);">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
                 <div>
-                    <h3>Parola contului</h3>
-                    <p>Actualizează-ți parola regulat pentru a menține contul în siguranță.</p>
+                    <h3 class="m-0 mb-1 fs-5 text-white">Parola contului</h3>
+                    <p class="m-0" style="color: var(--text-muted); font-size: 0.95rem;">Actualizează-ți parola regulat pentru siguranță.</p>
                 </div>
             </div>
-            <button class="btn-premium" onclick="arataModalParola()">Schimbă Parola</button>
+            <button class="btn-premium px-4 py-2" onclick="arataModalParola()">Schimbă Parola</button>
         </div>
 
     </div>
@@ -137,30 +167,31 @@
 
 <div id="parolaModal" class="modal-overlay">
     <div class="modal-content premium-dark-panel">
-        <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 1.4rem; color: var(--text-muted);">Schimbare Parolă</h3>
+        <h3 style="margin-top: 0; margin-bottom: 25px; font-size: 1.4rem; color: var(--text-main); font-weight: 600;">Schimbare Parolă</h3>
 
         <div class="input-group">
-            <label>Parola actuală</label>
+            <label style="color: var(--text-muted);">Parola actuală</label>
             <input type="password" id="oldPassword" placeholder="Introdu parola veche">
         </div>
 
         <div class="input-group">
-            <label>Parola nouă</label>
+            <label style="color: var(--text-muted);">Parola nouă</label>
             <input type="password" id="newPassword" placeholder="Creează o parolă nouă">
         </div>
 
         <div class="input-group">
-            <label>Confirmă parola nouă</label>
+            <label style="color: var(--text-muted);">Confirmă parola nouă</label>
             <input type="password" id="confirmPassword" placeholder="Repetă parola nouă">
         </div>
 
-        <div class="modal-actions">
+        <div class="modal-actions mt-4">
             <button class="btn-cancel" onclick="ascundeModalParola()">Anulează</button>
             <button class="btn-premium" onclick="salveazaParola()">Salvează Modificarea</button>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

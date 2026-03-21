@@ -593,3 +593,138 @@ function punePionezePeHarta(incidente) {
     });
     console.log(`[DEBUG HARTĂ] Am pus cu succes ${adaugate} pioneze pe hartă.`);
 }
+
+// ==========================================
+// --- 7. ZONA RAPORTARE INCIDENT (FORMULAR + MINI-HARTĂ) ---
+// ==========================================
+
+let miniMapInstance = null;
+let rapMarker = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (document.getElementById("miniMap")) {
+        initMiniMap();
+    }
+});
+
+function initMiniMap() {
+    // Setăm harta pe România
+    miniMapInstance = L.map('miniMap').setView([45.9000, 24.9668], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(miniMapInstance);
+
+    // Când dă click, luăm coordonatele și punem o pioneză roșie
+    miniMapInstance.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+
+        document.getElementById('rapLat').value = lat;
+        document.getElementById('rapLng').value = lng;
+
+        if (rapMarker) {
+            miniMapInstance.removeLayer(rapMarker);
+        }
+
+        const redIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+        });
+
+        rapMarker = L.marker([lat, lng], {icon: redIcon}).addTo(miniMapInstance);
+    });
+}
+
+// Căutare oraș pentru raportare
+let searchRapTimeout;
+async function cautaOrasRaportare(text) {
+    const resultsBox = document.getElementById("rapSearchResults");
+    if (!text || text.length < 2) {
+        resultsBox.style.display = "none";
+        return;
+    }
+
+    clearTimeout(searchRapTimeout);
+    searchRapTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch(`${API_ABONAMENTE}/cauta?nume=${text}`);
+            if (response.ok) {
+                const orase = await response.json();
+                resultsBox.innerHTML = "";
+                if (orase.length === 0) {
+                    resultsBox.innerHTML = '<li style="color: var(--text-muted);">Niciun oraș găsit...</li>';
+                } else {
+                    orase.forEach(oras => {
+                        resultsBox.innerHTML += `<li onclick="selecteazaOrasRaportare(${oras.id}, '${oras.numeLocalitate}', '${oras.numeJudet}')"><i class="fa-solid fa-location-dot" style="margin-right:8px;"></i> ${oras.numeLocalitate} (${oras.numeJudet})</li>`;
+                    });
+                }
+                resultsBox.style.display = "block";
+            }
+        } catch (e) { console.error(e); }
+    }, 300);
+}
+
+function selecteazaOrasRaportare(id, nume, judet) {
+    document.getElementById("rapLocalitateId").value = id;
+    document.getElementById("rapSearchOras").value = "";
+    document.getElementById("rapSearchResults").style.display = "none";
+
+    const textSelectat = document.getElementById("rapOrasSelectatText");
+    textSelectat.querySelector("span").innerText = `${nume} (Județul ${judet})`;
+    textSelectat.style.display = "block";
+}
+
+// Funcția de trimitere finală
+async function trimiteRaport() {
+    const userData = JSON.parse(localStorage.getItem("user"));
+    if (!userData) {
+        showToast("Trebuie să fii autentificat pentru a raporta un incident!", "error");
+        setTimeout(() => window.location.href = "login.html", 2000);
+        return;
+    }
+
+    const idLocalitate = document.getElementById("rapLocalitateId").value;
+    const tipInfractiune = document.getElementById("rapTip").value;
+    const descriere = document.getElementById("rapDescriere").value;
+    const lat = document.getElementById("rapLat").value;
+    const lng = document.getElementById("rapLng").value;
+
+    if (!tipInfractiune) return showToast("Alege tipul infracțiunii!", "error");
+    if (!idLocalitate) return showToast("Caută și selectează un oraș!", "error");
+    if (!lat || !lng) return showToast("Dă click pe hartă pentru a marca locația!", "error");
+
+    const cerere = {
+        idUtilizator: userData.id,
+        idLocalitate: parseInt(idLocalitate),
+        tipInfractiune: tipInfractiune,
+        descriere: descriere,
+        latitudine: parseFloat(lat),
+        longitudine: parseFloat(lng)
+    };
+
+    try {
+        const response = await fetch(`${API_INCIDENTE}/raporteaza`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cerere)
+        });
+
+        if (response.ok) {
+            showToast(await response.text(), "success");
+
+            // Golim formularul după succes
+            document.getElementById("rapTip").value = "";
+            document.getElementById("rapDescriere").value = "";
+            document.getElementById("rapLocalitateId").value = "";
+            document.getElementById("rapOrasSelectatText").style.display = "none";
+            if (rapMarker) miniMapInstance.removeLayer(rapMarker);
+            document.getElementById("rapLat").value = "";
+            document.getElementById("rapLng").value = "";
+        } else {
+            showToast(await response.text(), "error");
+        }
+    } catch (e) {
+        showToast("Eroare de conexiune la server!", "error");
+    }
+}

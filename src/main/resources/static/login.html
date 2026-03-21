@@ -2,52 +2,113 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Login / Register</title>
-    <style>
-        /* Un stil rapid și minimalist pentru pagina de login */
-        body { font-family: Arial, sans-serif; background: #ececec; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #2c3e50; color: white; border: none; cursor: pointer; border-radius: 4px; }
-        button:hover { background: #34495e; }
-        .toggle-btn { text-align: center; margin-top: 15px; color: blue; cursor: pointer; font-size: 0.9rem; }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autentificare - CrimeRate RO</title>
 
-        /* Stil pentru TOAST-ul nou */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #ef4444;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* Suprascriem stilurile doar pentru pagina de login ca să o centrăm perfect */
+        body {
             font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            transform: translateX(150%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 9999;
+            background-color: #f1f5f9; /* Fundalul luminos al aplicației */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
-        .toast.show { transform: translateX(0); }
-        .toast.success { background: #10b981; }
+
+        .auth-card {
+            background: var(--bg-dark); /* Dark Blue */
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: 100%;
+            max-width: 400px;
+            color: var(--text-main);
+            text-align: center;
+        }
+
+        .auth-card h2 {
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .auth-card input {
+            width: 100%;
+            padding: 14px 20px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.25);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .auth-card input:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-auth:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .toggle-btn {
+            text-align: center;
+            margin-top: 25px;
+            color: #60a5fa;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .toggle-btn:hover {
+            color: #93c5fd;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
-<div class="container" id="loginFormContainer">
+<div class="auth-card" id="loginFormContainer">
     <h2>Autentificare</h2>
-    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="email" id="loginEmail" placeholder="Adresa de Email">
     <input type="password" id="loginParola" placeholder="Parola">
-    <button onclick="faceLogin()">Intră în cont</button>
-    <div class="toggle-btn" onclick="toggleForms()">Nu ai cont? Înregistrează-te</div>
+    <button class="btn-auth" onclick="faceLogin()">Intră în cont</button>
+    <div class="toggle-btn" onclick="toggleForms()">Nu ai cont? Creează unul acum</div>
 </div>
 
-<div class="container" id="registerFormContainer" style="display: none;">
+<div class="auth-card" id="registerFormContainer" style="display: none;">
     <h2>Înregistrare</h2>
-    <input type="text" id="regNume" placeholder="Nume Complet">
-    <input type="email" id="regEmail" placeholder="Email">
-    <input type="password" id="regParola" placeholder="Parola">
-    <button onclick="faceRegister()">Creează cont</button>
+    <input type="text" id="regNume" placeholder="Numele tău complet">
+    <input type="email" id="regEmail" placeholder="Adresa de Email">
+    <input type="password" id="regParola" placeholder="Alege o parolă">
+    <button class="btn-auth" onclick="faceRegister()">Creează contul</button>
     <div class="toggle-btn" onclick="toggleForms()">Ai deja cont? Autentifică-te</div>
 </div>
 

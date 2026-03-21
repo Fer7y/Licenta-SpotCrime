@@ -165,17 +165,15 @@ body {
     font-family: 'Inter', sans-serif;
 }
 
-/* Panoul principal exterior (Culoarea Hover-ului din Sidebar) */
 .premium-dark-panel {
-    background-color: var(--bg-hover);
+    background-color: var(--bg-dark);
     border-radius: 20px;
     padding: 30px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
     margin-bottom: 35px;
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* ROW 1: Profil + Contact */
 .profile-info-row {
     display: flex;
     justify-content: space-between;
@@ -194,7 +192,7 @@ body {
 .avatar-circle {
     width: 80px;
     height: 80px;
-    background-color: rgba(0, 0, 0, 0.2); /* Transparenta pe fundalul panoului */
+    background-color: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 50%;
     display: flex;
@@ -238,7 +236,6 @@ body {
     color: var(--text-main);
 }
 
-/* ROW 2: Statistici interioare */
 .mini-stats-row {
     display: flex;
     gap: 20px;
@@ -248,7 +245,7 @@ body {
 .inner-stat-card {
     flex: 1;
     min-width: 220px;
-    background-color: rgba(0, 0, 0, 0.2); /* Overlay întunecat pentru adâncime */
+    background-color: rgba(0, 0, 0, 0.2);
     border-radius: 16px;
     padding: 20px 25px;
     display: flex;
@@ -288,7 +285,6 @@ body {
     color: var(--text-muted);
 }
 
-/* Securitate */
 .section-title {
     display: flex;
     align-items: center;
@@ -305,7 +301,7 @@ body {
 .accent-line {
     width: 6px;
     height: 25px;
-    background-color: #34d399; /* Accent verde deschis */
+    background-color: #34d399;
     border-radius: 4px;
 }
 
@@ -389,25 +385,22 @@ body {
 .toast.success {
     background: #10b981;
 }
-/* =========================================
-   POP-UP (MODAL) PENTRU PAROLĂ
-   ========================================= */
 
+/* POP-UP (MODAL) PENTRU PAROLĂ */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.75); /* Fundal estompat */
-    display: none; /* Ascuns implicit */
+    background: rgba(0, 0, 0, 0.75);
+    display: none;
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    backdrop-filter: blur(4px); /* Efect modern de ceață */
+    backdrop-filter: blur(4px);
 }
 
-/* Clasa care face modalul vizibil */
 .modal-overlay.show {
     display: flex;
 }
@@ -417,7 +410,6 @@ body {
     max-width: 420px;
     margin: 0 20px;
     padding: 30px;
-    /* Moștenește background-ul și umbra din .premium-dark-panel */
 }
 
 .input-group {
@@ -469,8 +461,9 @@ body {
 .btn-cancel:hover {
     color: var(--text-main);
 }
+
 /* =========================================
-   STILURI DASHBOARD (GRAFICE & TABEL)
+   STILURI DASHBOARD (GRAFICE & TABEL) MODIFICATE
    ========================================= */
 
 .dashboard-header {
@@ -483,22 +476,31 @@ body {
 }
 
 .year-filter {
-    background: white;
+    background: var(--bg-dark); /* Filtru Dark Blue */
+    color: var(--text-main);
     padding: 10px 20px;
     border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     display: flex;
     align-items: center;
     gap: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .year-filter select, #judetEvolutieSelect {
     padding: 8px 15px;
     border-radius: 8px;
-    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.1); /* Fundal select dark */
+    color: var(--text-main);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     font-weight: 600;
     outline: none;
     cursor: pointer;
+}
+
+.year-filter select option, #judetEvolutieSelect option {
+    background: var(--bg-dark);
+    color: var(--text-main);
 }
 
 .charts-row {
@@ -507,13 +509,16 @@ body {
     flex-wrap: wrap;
 }
 
+/* CARD-URILE DARK BLUE */
 .chart-card {
-    background: white;
+    background: var(--bg-dark); /* Magia e aici: culoarea de la sidebar */
+    color: var(--text-main);
     border-radius: 16px;
     padding: 25px;
     flex: 1;
     min-width: 300px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .full-width { width: 100%; }
@@ -522,10 +527,10 @@ body {
     margin-top: 0;
     margin-bottom: 20px;
     font-size: 1.1rem;
-    color: var(--bg-dark);
+    color: var(--text-main); /* Text alb în loc de negru */
 }
 
-/* Tabel */
+/* Tabel Adaptat pentru Dark Mode */
 .table-responsive {
     overflow-x: auto;
 }
@@ -538,11 +543,11 @@ body {
 .data-table th, .data-table td {
     padding: 12px 15px;
     text-align: left;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Margini fine transparente */
 }
 
 .data-table th {
-    background-color: #f8fafc;
+    background-color: rgba(0, 0, 0, 0.2); /* Antet tabel uşor diferențiat */
     color: var(--text-muted);
     font-weight: 600;
     font-size: 0.9rem;
@@ -558,8 +563,8 @@ body {
 .badge-mediu { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
 .badge-ridicat { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
 
-.trend-up { color: #ef4444; font-weight: 600; } /* Roșu la creștere criminalitate (Rău) */
-.trend-down { color: #10b981; font-weight: 600; } /* Verde la scădere criminalitate (Bine) */
+.trend-up { color: #ef4444; font-weight: 600; }
+.trend-down { color: #10b981; font-weight: 600; }
 .trend-neutral { color: var(--text-muted); }
 
 /* =========================================
@@ -602,7 +607,7 @@ body {
     overflow-y: auto;
     z-index: 1000;
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    display: none; /* Ascuns implicit */
+    display: none;
 }
 
 .autocomplete-results li {
@@ -652,6 +657,7 @@ body {
 .abonament-badge i:hover {
     transform: scale(1.2);
 }
+
 /* =========================================
    STILURI PENTRU HARTA LEAFLET
    ========================================= */
@@ -669,7 +675,7 @@ body {
 
 .popup-custom h3 {
     margin: 0 0 5px 0;
-    color: #ef4444; /* Roșu alertă */
+    color: #ef4444;
     font-size: 1.1rem;
 }
 

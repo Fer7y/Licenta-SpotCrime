@@ -1,8 +1,13 @@
 package com.licenta.crimerate.service;
 
 import com.licenta.crimerate.dto.IncidentRaportatDto;
+import com.licenta.crimerate.dto.IncidentRequestDto;
 import com.licenta.crimerate.entity.IncidentRaportat;
+import com.licenta.crimerate.entity.Localitate;
+import com.licenta.crimerate.entity.Utilizator;
 import com.licenta.crimerate.repository.IncidentRaportatRepository;
+import com.licenta.crimerate.repository.LocalitateRepository;
+import com.licenta.crimerate.repository.UtilizatorRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +17,15 @@ import java.util.stream.Collectors;
 public class IncidentRaportatService {
 
     private final IncidentRaportatRepository incidentRepository;
+    private final UtilizatorRepository utilizatorRepository;
+    private final LocalitateRepository localitateRepository;
 
-    public IncidentRaportatService(IncidentRaportatRepository incidentRepository) {
+    public IncidentRaportatService(IncidentRaportatRepository incidentRepository,
+                                   UtilizatorRepository utilizatorRepository,
+                                   LocalitateRepository localitateRepository) {
         this.incidentRepository = incidentRepository;
+        this.utilizatorRepository = utilizatorRepository;
+        this.localitateRepository = localitateRepository;
     }
 
     public List<IncidentRaportatDto> getAllIncidente() {
@@ -29,6 +40,35 @@ public class IncidentRaportatService {
                 .collect(Collectors.toList());
     }
 
+    public List<IncidentRaportatDto> getIncidenteByUtilizator(Integer utilizatorId) {
+        return incidentRepository.findByUtilizatorRaportorId(utilizatorId).stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    // --- FUNCȚIA PENTRU SALVARE INCIDENT NOU ---
+    public String raporteazaIncident(IncidentRequestDto cerere) {
+        Utilizator user = utilizatorRepository.findById(cerere.getIdUtilizator())
+                .orElseThrow(() -> new RuntimeException("Utilizatorul nu a fost găsit!"));
+
+        Localitate loc = localitateRepository.findById(cerere.getIdLocalitate())
+                .orElseThrow(() -> new RuntimeException("Localitatea nu a fost găsită!"));
+
+        IncidentRaportat incident = new IncidentRaportat();
+        incident.setUtilizatorRaportor(user);
+        incident.setLocalitate(loc);
+        incident.setTipInfractiune(cerere.getTipInfractiune());
+        incident.setDescriere(cerere.getDescriere());
+        incident.setLatitudine(cerere.getLatitudine());
+        incident.setLongitudine(cerere.getLongitudine());
+
+        // Status automat pentru ca Adminul să îl verifice ulterior
+        incident.setStatus("IN_ASTEPTARE");
+
+        incidentRepository.save(incident);
+        return "Incidentul a fost raportat cu succes și așteaptă aprobarea unui administrator!";
+    }
+
     private IncidentRaportatDto mapToDto(IncidentRaportat incident) {
         IncidentRaportatDto dto = new IncidentRaportatDto();
         dto.setId(incident.getId());
@@ -41,11 +81,5 @@ public class IncidentRaportatService {
         dto.setLatitudine(incident.getLatitudine());
         dto.setLongitudine(incident.getLongitudine());
         return dto;
-    }
-
-    public List<IncidentRaportatDto> getIncidenteByUtilizator(Integer utilizatorId) {
-        return incidentRepository.findByUtilizatorRaportorId(utilizatorId).stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
     }
 }

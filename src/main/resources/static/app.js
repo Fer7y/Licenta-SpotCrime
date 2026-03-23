@@ -737,23 +737,7 @@ async function incarcaIncidenteAdmin() {
     }
 }
 
-async function aprobaIncident(id) {
-    if (!confirm("Sigur aprobi acest incident?")) return;
-    try {
-        const response = await fetch(`${API_ADMIN}/incidente/${id}/aproba`, { method: 'PUT' });
-        showToast(await response.text(), response.ok ? 'success' : 'error');
-        if (response.ok) incarcaIncidenteAdmin();
-    } catch (e) { showToast("Eroare de conexiune!", "error"); }
-}
 
-async function respingeIncident(id) {
-    if (!confirm("Sigur respingi acest incident?")) return;
-    try {
-        const response = await fetch(`${API_ADMIN}/incidente/${id}/respinge`, { method: 'PUT' });
-        showToast(await response.text(), response.ok ? 'success' : 'error');
-        if (response.ok) incarcaIncidenteAdmin();
-    } catch (e) { showToast("Eroare de conexiune!", "error"); }
-}
 // ==========================================
 // --- LOGICA NOTIFICĂRI (SIDEBAR + MODAL) ---
 // ==========================================
@@ -852,4 +836,87 @@ async function incarcaToateNotificarile(userId) {
     } catch (e) {
         container.innerHTML = "<p style='color: #ef4444;'>Eroare la încărcarea datelor.</p>";
     }
+}
+// ==========================================
+// --- 10. LOGICA POP-UP CONFIRMARE ADMIN ---
+// ==========================================
+
+// Funcția universală care deschide fereastra pe centru
+function deschidePopUpConfirmare(config) {
+    const modal = document.getElementById("confirmModal");
+    if (!modal) return; // Siguranță în caz că nu ești pe pagina de admin
+
+    // Setăm textele și culorile din configurație
+    document.getElementById("confirmTitle").innerText = config.titlu;
+    document.getElementById("confirmMessage").innerText = config.mesaj;
+
+    const iconDiv = document.getElementById("confirmIcon");
+    iconDiv.innerHTML = config.iconHtml;
+    iconDiv.style.color = config.culoare;
+
+    const successBtn = document.getElementById("confirmSuccessBtn");
+    successBtn.innerText = config.textButon;
+    successBtn.style.backgroundColor = config.culoare;
+
+    // Afișăm modalul (folosim flex pentru centrare perfectă)
+    modal.style.display = "flex";
+
+    // --- GESTIONARE CLICK-URI ---
+
+    // 1. Când apasă CONFIRMĂ
+    successBtn.onclick = async () => {
+        modal.style.display = "none"; // Închidem pop-up-ul
+        showToast("Se procesează...", "info"); // Feedback vizual rapid
+        await config.actiuneFinala(); // Executăm apelul la API
+    };
+
+    // 2. Când apasă RENUNȚĂ
+    document.getElementById("confirmCancelBtn").onclick = () => {
+        modal.style.display = "none";
+    };
+
+    // 3. Opțional: Închide dacă dă click pe fundalul negru
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.style.display = "none";
+    };
+}
+
+// ==========================================
+// --- ACTUALIZARE FUNCȚII BUTOANE TABEL ---
+// ==========================================
+
+// Butonul VERDE - Aprobă
+async function aprobaIncident(id) {
+    deschidePopUpConfirmare({
+        titlu: "Aprobare Incident",
+        mesaj: "Ești sigur că vrei să CONFIRMI acest incident? Va apărea pe hartă și cetățenii abonați vor primi notificări.",
+        iconHtml: '<i class="fa-solid fa-circle-check"></i>', // Bifă FontAwesome
+        culoare: "#10b981", // Verde Premium
+        textButon: "Aprobă",
+        actiuneFinala: async () => {
+            try {
+                const response = await fetch(`${API_ADMIN}/incidente/${id}/aproba`, { method: 'PUT' });
+                showToast(await response.text(), response.ok ? 'success' : 'error');
+                if (response.ok) incarcaIncidenteAdmin(); // Reîncărcăm tabelul
+            } catch (e) { showToast("Eroare de conexiune la server!", "error"); }
+        }
+    });
+}
+
+// Butonul ROȘU - Respinge
+async function respingeIncident(id) {
+    deschidePopUpConfirmare({
+        titlu: "Respingere Incident",
+        mesaj: "Acest raport va fi marcat ca FALS. Sigur vrei să îl respingi? Nu va fi vizibil pe hartă.",
+        iconHtml: '<i class="fa-solid fa-circle-xmark"></i>', // X FontAwesome
+        culoare: "#ef4444", // Roșu Alertă
+        textButon: "Respinge",
+        actiuneFinala: async () => {
+            try {
+                const response = await fetch(`${API_ADMIN}/incidente/${id}/respinge`, { method: 'PUT' });
+                showToast(await response.text(), response.ok ? 'success' : 'error');
+                if (response.ok) incarcaIncidenteAdmin(); // Reîncărcăm tabelul
+            } catch (e) { showToast("Eroare de conexiune la server!", "error"); }
+        }
+    });
 }

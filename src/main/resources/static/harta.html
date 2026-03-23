@@ -14,9 +14,9 @@
 <body>
 
 <nav class="sidebar" id="sidebar">
-    <a href="profil.html" class="sidebar-header" id="profileHeaderBtn">
+    <a href="#" class="sidebar-header" id="profileHeaderBtn">
         <i class="fa-solid fa-user"></i>
-        <span class="logo-text" id="profileHeaderText">Contul Meu</span>
+        <span class="logo-text" id="profileHeaderText">Guest</span>
     </a>
 
     <ul class="nav-links">
@@ -32,13 +32,28 @@
                 <span class="text">Map</span>
             </a>
         </li>
-        <li>
+
+        <li id="loginMenuItem">
+            <a href="login.html">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                <span class="text">Autentificare</span>
+            </a>
+        </li>
+
+        <li id="raportareMenuItem" style="display: none;">
             <a href="raportare.html">
                 <i class="fa-solid fa-bullhorn"></i>
                 <span class="text">Raportează Incident</span>
             </a>
         </li>
-        <li id="logoutMenuItem">
+        <li id="adminMenuItem" style="display: none;">
+            <a href="admin.html" style="color: #f59e0b;">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span class="text">Panou Admin</span>
+            </a>
+        </li>
+
+        <li id="logoutMenuItem" style="display: none;">
             <a href="#" onclick="logout()">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 <span class="text">Deconectare</span>
@@ -61,6 +76,7 @@
         <div class="year-filter">
             <label for="hartaYearSelect">Coeficienți oficiali pentru:</label>
             <select id="hartaYearSelect" onchange="incarcaDateHarta()">
+                <option value="2026">2026</option>
                 <option value="2025">2025</option>
                 <option value="2024">2024</option>
                 <option value="2023">2023</option>

@@ -4,7 +4,7 @@
 const API_URL = "http://localhost:8080/api/auth";
 const API_INCIDENTE = "http://localhost:8080/api/incidente";
 const API_ISTORIC = "http://localhost:8080/api/istoric";
-const API_ABONAMENTE = "http://localhost:8080/api/abonamente"; // NOU
+const API_ABONAMENTE = "http://localhost:8080/api/abonamente";
 
 // ==========================================
 // --- FUNCTIE PENTRU POP-UP FRUMOS (TOAST) ---
@@ -30,38 +30,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const loginItem = document.getElementById("loginMenuItem");
     const logoutItem = document.getElementById("logoutMenuItem");
-    const welcomeMessage = document.getElementById("welcomeMessage");
+    const raportareItem = document.getElementById("raportareMenuItem");
+    const adminItem = document.getElementById("adminMenuItem"); // <--- NOU
+
     const profileHeaderBtn = document.getElementById("profileHeaderBtn");
     const profileHeaderText = document.getElementById("profileHeaderText");
 
     if (userData) {
+        // --- UTILIZATOR LOGAT ---
         const user = JSON.parse(userData);
         if(loginItem) loginItem.style.display = "none";
         if(logoutItem) logoutItem.style.display = "block";
-        if(profileHeaderText) profileHeaderText.innerText = "Contul Meu";
+        if(raportareItem) raportareItem.style.display = "block";
 
+        // --- VERIFICARE ROL PENTRU ADMIN ---
+        if(adminItem) {
+            if (user.rol === "ADMIN") {
+                adminItem.style.display = "block"; // Doar adminul vede scutul
+            } else {
+                adminItem.style.display = "none";
+            }
+        }
+
+        if(profileHeaderText) profileHeaderText.innerText = "Contul Meu";
         if(profileHeaderBtn) {
             profileHeaderBtn.href = "profil.html";
+            profileHeaderBtn.style.cursor = "pointer";
             profileHeaderBtn.onclick = null;
         }
     } else {
+        // --- VIZITATOR (GUEST) ---
+        if(loginItem) loginItem.style.display = "block";
+        if(logoutItem) logoutItem.style.display = "none";
+        if(raportareItem) raportareItem.style.display = "none";
+        if(adminItem) adminItem.style.display = "none"; // Guest nu vede adminul
+
         if(profileHeaderText) profileHeaderText.innerText = "Guest";
         if(profileHeaderBtn) {
             profileHeaderBtn.href = "#";
+            profileHeaderBtn.style.cursor = "default";
             profileHeaderBtn.onclick = (e) => e.preventDefault();
         }
     }
 
-    // Dacă suntem pe profil, încărcăm tot (inclusiv abonamentele)
-    if (document.getElementById("profNume")) {
-        incarcaDateProfil();
-    }
-
-    // Dacă suntem pe dashboard
+    if (document.getElementById("profNume")) incarcaDateProfil();
     if (document.getElementById("globalYearSelect")) {
         incarcaDashboard();
         populeazaDropdownJudete();
     }
+    // Dacă suntem pe pagina de Admin, încărcăm tabelul
+    if (document.getElementById("tabelAdminBody")) incarcaIncidenteAdmin();
 });
 
 // ==========================================
@@ -69,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 function logout() {
     localStorage.removeItem("user");
-    window.location.href = "login.html";
+    window.location.href = "index.html"; // Ducem Guest-ul pe pagina principală
 }
 
 function toggleForms() {
@@ -125,7 +143,7 @@ async function faceRegister() {
 }
 
 // ==========================================
-// --- 3. PROFIL & ALERTE (NOU) ---
+// --- 3. PROFIL & ALERTE ---
 // ==========================================
 async function incarcaDateProfil() {
     const userData = localStorage.getItem("user");
@@ -142,7 +160,6 @@ async function incarcaDateProfil() {
         document.getElementById("profData").innerText = "Recent";
     }
 
-    // Încărcăm statisticile
     try {
         const response = await fetch(`${API_INCIDENTE}/utilizator/${user.id}`);
         if (response.ok) {
@@ -153,13 +170,9 @@ async function incarcaDateProfil() {
         }
     } catch (err) { console.error(err); }
 
-    // ÎNCĂRCĂM ABONAMENTELE LA ALERTE (NOU)
     incarcaAbonamente(user.id);
 }
 
-// --- LOGICA PENTRU AUTO-COMPLETE ȘI ABONAMENTE ---
-
-// Aducem orașele la care e abonat și le punem sub formă de badges
 async function incarcaAbonamente(userId) {
     try {
         const response = await fetch(`${API_ABONAMENTE}/utilizator/${userId}`);
@@ -185,21 +198,15 @@ async function incarcaAbonamente(userId) {
     } catch (err) { console.error("Eroare aducere abonamente", err); }
 }
 
-// Funcție declanșată la fiecare literă tastată (Search)
 let searchTimeout;
 async function cautaOras(text) {
     const resultsBox = document.getElementById("searchResults");
-
-    // Dacă a scris prea puțin, ascundem cutia
     if (!text || text.length < 2) {
         resultsBox.style.display = "none";
         return;
     }
 
-    // Curățăm timer-ul anterior (ca să nu facă spam la server)
     clearTimeout(searchTimeout);
-
-    // Așteptăm 300ms după ultima tastare
     searchTimeout = setTimeout(async () => {
         try {
             const response = await fetch(`${API_ABONAMENTE}/cauta?nume=${text}`);
@@ -220,12 +227,10 @@ async function cautaOras(text) {
     }, 300);
 }
 
-// Când dă click pe un oraș din listă
 async function adaugaAbonament(localitateId) {
     const userData = JSON.parse(localStorage.getItem("user"));
     if (!userData) return;
 
-    // Ascundem rezultatele și golim căsuța de search
     document.getElementById("searchResults").style.display = "none";
     document.getElementById("searchOras").value = "";
 
@@ -236,14 +241,13 @@ async function adaugaAbonament(localitateId) {
 
         if (response.ok) {
             showToast(await response.text(), "success");
-            incarcaAbonamente(userData.id); // Reîncărcăm lista de badge-uri
+            incarcaAbonamente(userData.id);
         } else {
-            showToast(await response.text(), "error"); // Eroare (ex: Ești deja abonat)
+            showToast(await response.text(), "error");
         }
     } catch (e) { showToast("Eroare de conexiune!", "error"); }
 }
 
-// Când dă click pe 'X' de pe un badge
 async function stergeAbonament(abonamentId) {
     const userData = JSON.parse(localStorage.getItem("user"));
     if (!userData) return;
@@ -255,14 +259,13 @@ async function stergeAbonament(abonamentId) {
 
         if (response.ok) {
             showToast(await response.text(), "success");
-            incarcaAbonamente(userData.id); // Reîncărcăm lista de badge-uri
+            incarcaAbonamente(userData.id);
         } else {
             showToast("Eroare la ștergere", "error");
         }
     } catch (e) { showToast("Eroare de conexiune!", "error"); }
 }
 
-// Ascunde auto-complete-ul dacă utilizatorul dă click în afara lui
 document.addEventListener('click', function(event) {
     const searchInput = document.getElementById('searchOras');
     const resultsBox = document.getElementById('searchResults');
@@ -271,7 +274,6 @@ document.addEventListener('click', function(event) {
         resultsBox.style.display = 'none';
     }
 });
-
 
 // ==========================================
 // --- 4. SCHIMBARE PAROLĂ ---
@@ -443,17 +445,16 @@ async function incarcaGraficEvolutie() {
         }
     } catch (e) { console.error(e); }
 }
+
 // ==========================================
 // --- 6. ZONA HARTĂ INTERACTIVĂ (LEAFLET) ---
 // ==========================================
-
 let mapInstance = null;
 let geoJsonLayer = null;
 let markersLayer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("map")) {
-        console.log("[DEBUG HARTĂ] Pagina de hartă detectată. Pornim...");
         initializeazaHarta();
         incarcaDateHarta();
     }
@@ -467,7 +468,6 @@ function initializeazaHarta() {
             maxZoom: 18,
         }).addTo(mapInstance);
         markersLayer = L.layerGroup().addTo(mapInstance);
-        console.log("[DEBUG HARTĂ] Harta de bază a fost încărcată cu succes.");
     } catch (e) {
         console.error("[DEBUG HARTĂ] Eroare la inițializarea hărții Leaflet:", e);
     }
@@ -475,52 +475,33 @@ function initializeazaHarta() {
 
 async function incarcaDateHarta() {
     const anSelectat = document.getElementById("hartaYearSelect").value;
-    console.log(`[DEBUG HARTĂ] Cerem datele pentru anul: ${anSelectat}`);
-
     let dateCoeficienti = [];
 
-    // 1. Aducem Coeficienții din Backend-ul tău
     try {
         const resCoef = await fetch(`${API_ISTORIC}/an/${anSelectat}`);
-        if(resCoef.ok) {
-            dateCoeficienti = await resCoef.json();
-            console.log("[DEBUG HARTĂ] Coeficienți primiți din BD:", dateCoeficienti.length, "județe");
-        }
-    } catch(e) { console.error("[DEBUG HARTĂ] Backend-ul nu răspunde (Istoric):", e); }
+        if(resCoef.ok) dateCoeficienti = await resCoef.json();
+    } catch(e) { console.error(e); }
 
-    // 2. Aducem granițele României (GeoJSON - Link Sigur)
     try {
-        console.log("[DEBUG HARTĂ] Se descarcă granițele României...");
         const resGeo = await fetch("https://raw.githubusercontent.com/bumbu/romania-geojson/master/romania-counties.geojson");
         if(resGeo.ok) {
             const geoData = await resGeo.json();
-            console.log("[DEBUG HARTĂ] Granițele au fost descărcate! Desenăm poligoanele...");
             deseneazaPoligoane(geoData, dateCoeficienti);
-        } else {
-            console.error("[DEBUG HARTĂ] Eroare 404: Link-ul GeoJSON este picat.");
         }
-    } catch(e) { console.error("[DEBUG HARTĂ] Eroare de rețea la GeoJSON:", e); }
+    } catch(e) { console.error(e); }
 
-    // 3. Aducem Incidentele Aprobate + FILTRARE PE AN
     try {
-        console.log("[DEBUG HARTĂ] Cerem incidentele aprobate de la Backend...");
         const resIncidente = await fetch(`${API_INCIDENTE}/aprobate`);
         if (resIncidente.ok) {
             const incidenteTotiAnii = await resIncidente.json();
-
-            // FILTRARE: Păstrăm doar incidentele care s-au întâmplat în anul selectat!
             const incidenteFiltrate = incidenteTotiAnii.filter(inc => {
-                if (!inc.dataRaportare) return true; // Dacă din greșeală nu are dată, îl lăsăm
+                if (!inc.dataRaportare) return true;
                 const anIncident = new Date(inc.dataRaportare).getFullYear();
                 return anIncident === parseInt(anSelectat);
             });
-
-            console.log(`[DEBUG HARTĂ] Din totalul de ${incidenteTotiAnii.length}, am păstrat ${incidenteFiltrate.length} pentru anul ${anSelectat}.`);
             punePionezePeHarta(incidenteFiltrate);
-        } else {
-            console.error("[DEBUG HARTĂ] Endpoint-ul /aprobate a returnat o eroare.");
         }
-    } catch (e) { console.error("[DEBUG HARTĂ] Eroare la aducerea incidentelor:", e); }
+    } catch (e) { console.error(e); }
 }
 
 function normalizareNume(nume) {
@@ -535,24 +516,16 @@ function deseneazaPoligoane(geoData, coeficientiBD) {
         style: function (feature) {
             const numeGeoOriginal = feature.properties.NAME_1 || feature.properties.name || "";
             const numeGeo = normalizareNume(numeGeoOriginal);
-
             const judetBD = coeficientiBD.find(j => normalizareNume(j.numeJudet) === numeGeo);
 
-            let culoare = '#94a3b8'; // Gri default
+            let culoare = '#94a3b8';
             if (judetBD) {
                 if (judetBD.domeniuIncadrare === 'RIDICAT') culoare = '#ef4444';
                 else if (judetBD.domeniuIncadrare === 'MEDIU') culoare = '#f59e0b';
                 else if (judetBD.domeniuIncadrare === 'SCAZUT') culoare = '#10b981';
             }
 
-            return {
-                fillColor: culoare,
-                weight: 2,
-                opacity: 1,
-                color: 'white',
-                dashArray: '3',
-                fillOpacity: 0.5
-            };
+            return { fillColor: culoare, weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.5 };
         },
         onEachFeature: function (feature, layer) {
             const numeGeoOriginal = feature.properties.NAME_1 || feature.properties.name || "";
@@ -570,8 +543,6 @@ function deseneazaPoligoane(geoData, coeficientiBD) {
 
 function punePionezePeHarta(incidente) {
     markersLayer.clearLayers();
-    let adaugate = 0;
-
     incidente.forEach(inc => {
         if (inc.latitudine && inc.longitudine) {
             const dataInc = new Date(inc.dataRaportare).toLocaleDateString("ro-RO", {
@@ -588,16 +559,13 @@ function punePionezePeHarta(incidente) {
 
             const marker = L.marker([inc.latitudine, inc.longitudine]).bindPopup(popupContinut);
             markersLayer.addLayer(marker);
-            adaugate++;
         }
     });
-    console.log(`[DEBUG HARTĂ] Am pus cu succes ${adaugate} pioneze pe hartă.`);
 }
 
 // ==========================================
-// --- 7. ZONA RAPORTARE INCIDENT (FORMULAR + MINI-HARTĂ) ---
+// --- 7. ZONA RAPORTARE INCIDENT ---
 // ==========================================
-
 let miniMapInstance = null;
 let rapMarker = null;
 
@@ -608,13 +576,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initMiniMap() {
-    // Setăm harta pe România
     miniMapInstance = L.map('miniMap').setView([45.9000, 24.9668], 6);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(miniMapInstance);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(miniMapInstance);
 
-    // Când dă click, luăm coordonatele și punem o pioneză roșie
     miniMapInstance.on('click', function(e) {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
@@ -622,9 +586,7 @@ function initMiniMap() {
         document.getElementById('rapLat').value = lat;
         document.getElementById('rapLng').value = lng;
 
-        if (rapMarker) {
-            miniMapInstance.removeLayer(rapMarker);
-        }
+        if (rapMarker) { miniMapInstance.removeLayer(rapMarker); }
 
         const redIcon = new L.Icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -636,7 +598,6 @@ function initMiniMap() {
     });
 }
 
-// Căutare oraș pentru raportare
 let searchRapTimeout;
 async function cautaOrasRaportare(text) {
     const resultsBox = document.getElementById("rapSearchResults");
@@ -675,7 +636,6 @@ function selecteazaOrasRaportare(id, nume, judet) {
     textSelectat.style.display = "block";
 }
 
-// Funcția de trimitere finală
 async function trimiteRaport() {
     const userData = JSON.parse(localStorage.getItem("user"));
     if (!userData) {
@@ -712,8 +672,6 @@ async function trimiteRaport() {
 
         if (response.ok) {
             showToast(await response.text(), "success");
-
-            // Golim formularul după succes
             document.getElementById("rapTip").value = "";
             document.getElementById("rapDescriere").value = "";
             document.getElementById("rapLocalitateId").value = "";
@@ -727,4 +685,69 @@ async function trimiteRaport() {
     } catch (e) {
         showToast("Eroare de conexiune la server!", "error");
     }
+}
+// ==========================================
+// --- 8. ZONA PENTRU PANOUL DE ADMIN ---
+// ==========================================
+const API_ADMIN = "http://localhost:8080/api/admin";
+
+async function incarcaIncidenteAdmin() {
+    const tbody = document.getElementById("tabelAdminBody");
+    if (!tbody) return;
+
+    try {
+        const response = await fetch(`${API_ADMIN}/incidente-in-asteptare`);
+        const incidente = await response.json();
+
+        tbody.innerHTML = "";
+
+        if (incidente.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #10b981; padding: 20px;">Nu există niciun incident în așteptare!</td></tr>`;
+            return;
+        }
+
+        incidente.forEach(inc => {
+            const dataFormata = new Date(inc.dataRaportare).toLocaleString("ro-RO");
+
+            tbody.innerHTML += `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 15px;">${dataFormata}</td>
+                    <td style="padding: 15px;"><strong>${inc.numeRaportor}</strong></td>
+                    <td style="padding: 15px; color: #3b82f6;">${inc.numeLocalitate}</td>
+                    <td style="padding: 15px; color: #f59e0b;">${inc.tipInfractiune}</td>
+                    <td style="padding: 15px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${inc.descriere || '-'}">
+                        ${inc.descriere || '-'}
+                    </td>
+                    <td style="padding: 15px; text-align: center;">
+                        <button onclick="aprobaIncident(${inc.id})" style="background: #10b981; border: none; padding: 6px 12px; color: white; border-radius: 6px; cursor: pointer; margin-right: 5px;">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                        <button onclick="respingeIncident(${inc.id})" style="background: #ef4444; border: none; padding: 6px 12px; color: white; border-radius: 6px; cursor: pointer;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    } catch (error) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #ef4444; padding: 20px;">Eroare la conectarea cu serverul!</td></tr>`;
+    }
+}
+
+async function aprobaIncident(id) {
+    if (!confirm("Sigur aprobi acest incident?")) return;
+    try {
+        const response = await fetch(`${API_ADMIN}/incidente/${id}/aproba`, { method: 'PUT' });
+        showToast(await response.text(), response.ok ? 'success' : 'error');
+        if (response.ok) incarcaIncidenteAdmin();
+    } catch (e) { showToast("Eroare de conexiune!", "error"); }
+}
+
+async function respingeIncident(id) {
+    if (!confirm("Sigur respingi acest incident?")) return;
+    try {
+        const response = await fetch(`${API_ADMIN}/incidente/${id}/respinge`, { method: 'PUT' });
+        showToast(await response.text(), response.ok ? 'success' : 'error');
+        if (response.ok) incarcaIncidenteAdmin();
+    } catch (e) { showToast("Eroare de conexiune!", "error"); }
 }

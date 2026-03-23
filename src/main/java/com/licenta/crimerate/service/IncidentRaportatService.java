@@ -82,4 +82,33 @@ public class IncidentRaportatService {
         dto.setLongitudine(incident.getLongitudine());
         return dto;
     }
+
+    // 1. Aduce doar incidentele care așteaptă aprobare
+    public List<IncidentRaportatDto> getIncidenteInAsteptare() {
+        return incidentRepository.findByStatus("IN_ASTEPTARE").stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
+    }
+
+    // 2. Aprobă incidentul ca să apară pe hartă
+    public String aprobaIncident(Integer incidentId) {
+        IncidentRaportat incident = incidentRepository.findById(incidentId)
+                .orElseThrow(() -> new RuntimeException("Incidentul nu a fost găsit!"));
+
+        incident.setStatus("APROBAT");
+        incidentRepository.save(incident);
+
+        return "Incident APROBAT! Acum este vizibil pe hartă.";
+    }
+
+    // 3. Respinge incidentul (Fals / Spam)
+    public String respingeIncident(Integer incidentId) {
+        IncidentRaportat incident = incidentRepository.findById(incidentId)
+                .orElseThrow(() -> new RuntimeException("Incidentul nu a fost găsit!"));
+
+        incident.setStatus("RESPINS");
+        incidentRepository.save(incident);
+
+        return "Incidentul a fost RESPINS și va fi ascuns.";
+    }
 }

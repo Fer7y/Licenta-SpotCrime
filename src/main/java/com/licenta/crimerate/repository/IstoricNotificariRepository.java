@@ -9,4 +9,5 @@ import java.util.List;
 public interface IstoricNotificariRepository extends JpaRepository<IstoricNotificari, Integer> {
     List<IstoricNotificari> findByUtilizatorId(Integer utilizatorId);
     List<IstoricNotificari> findByUtilizatorIdAndCitit(Integer utilizatorId, Boolean citit);
+    List<IstoricNotificari> findByUtilizatorIdOrderByDataNotificareDesc(Integer utilizatorId);
 }

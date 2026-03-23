@@ -690,3 +690,20 @@ body {
     color: #3b82f6;
     font-weight: 600;
 }
+.sidebar-notif-badge {
+    position: absolute;
+    top: 8px;
+    left: 25px; /* Ajustează în funcție de padding-ul iconiței tale */
+    background: #ef4444;
+    color: white;
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    border-radius: 50%;
+    font-weight: bold;
+    border: 2px solid #111827; /* Culoarea fundalului din sidebar */
+}
+
+/* Ajustăm modalul să nu fie acoperit de nimic */
+.notif-modal {
+    z-index: 9999 !important;
+}

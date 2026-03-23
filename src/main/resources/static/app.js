@@ -27,6 +27,7 @@ function showToast(message, type = 'error') {
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const userData = localStorage.getItem("user");
+    const menuNotificari = document.getElementById("menuNotificari");
 
     const loginItem = document.getElementById("loginMenuItem");
     const logoutItem = document.getElementById("logoutMenuItem");
@@ -42,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if(loginItem) loginItem.style.display = "none";
         if(logoutItem) logoutItem.style.display = "block";
         if(raportareItem) raportareItem.style.display = "block";
+        if(menuNotificari) menuNotificari.style.display = "block";
 
         // --- VERIFICARE ROL PENTRU ADMIN ---
         if(adminItem) {
@@ -63,7 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if(loginItem) loginItem.style.display = "block";
         if(logoutItem) logoutItem.style.display = "none";
         if(raportareItem) raportareItem.style.display = "none";
-        if(adminItem) adminItem.style.display = "none"; // Guest nu vede adminul
+        if(adminItem) adminItem.style.display = "none";
+        if(menuNotificari) menuNotificari.style.display = "none";
 
         if(profileHeaderText) profileHeaderText.innerText = "Guest";
         if(profileHeaderBtn) {
@@ -750,4 +753,103 @@ async function respingeIncident(id) {
         showToast(await response.text(), response.ok ? 'success' : 'error');
         if (response.ok) incarcaIncidenteAdmin();
     } catch (e) { showToast("Eroare de conexiune!", "error"); }
+}
+// ==========================================
+// --- LOGICA NOTIFICĂRI (SIDEBAR + MODAL) ---
+// ==========================================
+const API_NOTIF = "http://localhost:8080/api/notificari";
+
+// Verificăm notificările la fiecare 30 de secunde dacă utilizatorul este logat
+if (localStorage.getItem("user")) {
+    setInterval(verificaNotificariNoi, 30000);
+    setTimeout(verificaNotificariNoi, 1000); // Prima verificare la încărcarea paginii
+}
+
+// Funcția care aprinde bulina roșie în sidebar
+async function verificaNotificariNoi() {
+    const userData = localStorage.getItem("user");
+    if (!userData) return;
+    const user = JSON.parse(userData);
+
+    try {
+        // Chemăm endpoint-ul de "necitite" pe care l-am făcut în Java
+        const res = await fetch(`${API_NOTIF}/utilizator/${user.id}/necitite`);
+        if (res.ok) {
+            const necitite = await res.json();
+            const badge = document.getElementById("notifBadge");
+            if (badge) {
+                if (necitite.length > 0) {
+                    badge.innerText = necitite.length;
+                    badge.style.display = "block";
+                } else {
+                    badge.style.display = "none";
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Eroare la verificarea notificărilor:", e);
+    }
+}
+
+// Funcția care deschide/închide Pop-up-ul (Modalul)
+async function toggleNotificari(event) {
+    if (event) event.preventDefault(); // Prevenim scroll-ul paginii la click
+
+    const modal = document.getElementById("notifModal");
+    const userData = localStorage.getItem("user");
+    if (!userData || !modal) return;
+
+    const user = JSON.parse(userData);
+
+    if (modal.style.display === "block") {
+        modal.style.display = "none";
+    } else {
+        modal.style.display = "block";
+
+        // Încărcăm mesajele în interiorul modalului
+        await incarcaToateNotificarile(user.id);
+
+        // După ce utilizatorul a deschis lista, marcăm totul ca CITIT în backend
+        try {
+            await fetch(`${API_NOTIF}/citeste-toate/${user.id}`, { method: 'PUT' });
+            verificaNotificariNoi(); // Resetăm bulina roșie la 0
+        } catch (e) {
+            console.error("Eroare la marcarea notificărilor ca citite", e);
+        }
+    }
+}
+
+// Funcția care randează efectiv mesajele în Modal
+async function incarcaToateNotificarile(userId) {
+    const container = document.getElementById("listaNotificariContent");
+    if (!container) return;
+
+    try {
+        const res = await fetch(`${API_NOTIF}/utilizator/${userId}`);
+        if (res.ok) {
+            const list = await res.json();
+            container.innerHTML = "";
+
+            if (list.length === 0) {
+                container.innerHTML = '<p style="text-align:center; padding:20px; color:#64748b;">Nu ai nicio notificare încă.</p>';
+                return;
+            }
+
+            list.forEach(n => {
+                // Formatăm data frumos
+                const dataStr = n.dataNotificare ? new Date(n.dataNotificare).toLocaleString("ro-RO") : "Recent";
+
+                container.innerHTML += `
+                    <div class="notif-item ${n.citit ? '' : 'necitit'}" style="padding: 12px; margin-bottom: 8px; border-radius: 6px; background: rgba(255,255,255,0.05); border-left: 4px solid ${n.citit ? '#3b82f6' : '#ef4444'};">
+                        <p style="margin: 0; font-size: 0.9rem; color: #f8fafc;">${n.mesaj}</p>
+                        <span style="font-size: 0.75rem; color: #94a3b8; display: block; margin-top: 5px;">
+                            <i class="fa-solid fa-clock"></i> ${dataStr}
+                        </span>
+                    </div>
+                `;
+            });
+        }
+    } catch (e) {
+        container.innerHTML = "<p style='color: #ef4444;'>Eroare la încărcarea datelor.</p>";
+    }
 }

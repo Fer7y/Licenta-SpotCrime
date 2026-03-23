@@ -37,4 +37,21 @@ public class IstoricNotificariService {
         dto.setDataNotificare(notificare.getDataNotificare());
         return dto;
     }
+    // Funcția care transformă notificările din "necitite" în "citite"
+    public String marcheazaToateCaCitite(Integer utilizatorId) {
+        // Căutăm toate notificările utilizatorului
+        List<IstoricNotificari> notificari = notificariRepository.findByUtilizatorIdOrderByDataNotificareDesc(utilizatorId);
+
+        boolean modificate = false;
+
+        for (IstoricNotificari notificare : notificari) {
+            if (!notificare.getCitit()) { // Dacă e fals (necitit)
+                notificare.setCitit(true); // O facem true (citit)
+                notificariRepository.save(notificare);
+                modificate = true;
+            }
+        }
+
+        return modificate ? "Notificările au fost marcate ca citite." : "Nu existau notificări noi.";
+    }
 }

@@ -2,10 +2,14 @@ package com.licenta.crimerate.service;
 
 import com.licenta.crimerate.dto.IncidentRaportatDto;
 import com.licenta.crimerate.dto.IncidentRequestDto;
+import com.licenta.crimerate.entity.AbonamentAlerta;
 import com.licenta.crimerate.entity.IncidentRaportat;
+import com.licenta.crimerate.entity.IstoricNotificari;
 import com.licenta.crimerate.entity.Localitate;
 import com.licenta.crimerate.entity.Utilizator;
+import com.licenta.crimerate.repository.AbonamentAlertaRepository;
 import com.licenta.crimerate.repository.IncidentRaportatRepository;
+import com.licenta.crimerate.repository.IstoricNotificariRepository;
 import com.licenta.crimerate.repository.LocalitateRepository;
 import com.licenta.crimerate.repository.UtilizatorRepository;
 import org.springframework.stereotype.Service;
@@ -20,12 +24,20 @@ public class IncidentRaportatService {
     private final UtilizatorRepository utilizatorRepository;
     private final LocalitateRepository localitateRepository;
 
+    // Injectăm repository-urile noi pentru notificări
+    private final AbonamentAlertaRepository abonamentRepository;
+    private final IstoricNotificariRepository notificariRepository;
+
     public IncidentRaportatService(IncidentRaportatRepository incidentRepository,
                                    UtilizatorRepository utilizatorRepository,
-                                   LocalitateRepository localitateRepository) {
+                                   LocalitateRepository localitateRepository,
+                                   AbonamentAlertaRepository abonamentRepository,
+                                   IstoricNotificariRepository notificariRepository) {
         this.incidentRepository = incidentRepository;
         this.utilizatorRepository = utilizatorRepository;
         this.localitateRepository = localitateRepository;
+        this.abonamentRepository = abonamentRepository;
+        this.notificariRepository = notificariRepository;
     }
 
     public List<IncidentRaportatDto> getAllIncidente() {
@@ -90,15 +102,33 @@ public class IncidentRaportatService {
                 .collect(Collectors.toList());
     }
 
-    // 2. Aprobă incidentul ca să apară pe hartă
+    // ==========================================
+    // --- ZONA ADMIN: APROBARE ȘI NOTIFICĂRI ---
+    // ==========================================
+
+    // 2. Aprobă incidentul și trimite notificări cetățenilor abonați
     public String aprobaIncident(Integer incidentId) {
         IncidentRaportat incident = incidentRepository.findById(incidentId)
                 .orElseThrow(() -> new RuntimeException("Incidentul nu a fost găsit!"));
 
+        // Aprobăm incidentul ca să apară pe hartă
         incident.setStatus("APROBAT");
         incidentRepository.save(incident);
 
-        return "Incident APROBAT! Acum este vizibil pe hartă.";
+        // Găsim toți utilizatorii abonați la localitatea unde a avut loc incidentul
+        List<AbonamentAlerta> abonamente = abonamentRepository.findByLocalitateId(incident.getLocalitate().getId());
+
+        // Creăm o notificare pentru fiecare utilizator abonat
+        for (AbonamentAlerta abonament : abonamente) {
+            IstoricNotificari notificare = new IstoricNotificari();
+            notificare.setUtilizator(abonament.getUtilizator());
+            notificare.setMesaj("ALERTĂ: Un incident (" + incident.getTipInfractiune() + ") a fost confirmat în orașul tău: " + incident.getLocalitate().getNumeLocalitate() + ".");
+            notificare.setCitit(false);
+
+            notificariRepository.save(notificare);
+        }
+
+        return "Incident APROBAT! Au fost trimise " + abonamente.size() + " notificări cetățenilor abonați.";
     }
 
     // 3. Respinge incidentul (Fals / Spam)

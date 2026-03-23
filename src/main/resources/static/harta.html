@@ -52,6 +52,13 @@
                 <span class="text">Panou Admin</span>
             </a>
         </li>
+        <li id="menuNotificari" style="display: none;">
+            <a href="#" onclick="toggleNotificari(event)" style="position: relative;">
+                <i class="fa-solid fa-bell"></i>
+                <span class="text">Notificări</span>
+                <span id="notifBadge" class="sidebar-notif-badge" style="display: none;">0</span>
+            </a>
+        </li>
 
         <li id="logoutMenuItem" style="display: none;">
             <a href="#" onclick="logout()">
@@ -89,6 +96,17 @@
         <div id="map" style="height: 650px; width: 100%; border-radius: 12px; z-index: 1;"></div>
     </div>
 </main>
+
+<div id="notifModal" class="notif-modal" style="display: none; position: fixed; z-index: 9999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
+    <div style="background: #1e293b; margin: 10% auto; width: 90%; max-width: 400px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+        <div style="padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: #f59e0b; font-size: 1.1rem;"><i class="fa-solid fa-circle-info"></i> Notificări</h3>
+            <span onclick="toggleNotificari()" style="color: #94a3b8; font-size: 24px; cursor: pointer;">&times;</span>
+        </div>
+        <div id="listaNotificariContent" style="max-height: 400px; overflow-y: auto; padding: 15px;">
+        </div>
+    </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>

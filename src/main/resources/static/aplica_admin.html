@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Harta Criminalității - CrimeRate RO</title>
+    <title>Devino Admin - CrimeRate RO</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -86,27 +84,40 @@
     </div>
 </nav>
 
-<main class="main-content">
-    <div class="dashboard-header">
-        <div>
-            <h1 style="color: var(--bg-dark);">Harta Interactivă a Criminalității</h1>
-            <p style="color: var(--text-muted); margin-top: 5px;">Explorează zonele de risc și incidentele raportate de cetățeni.</p>
+<main class="main-content" style="display: flex; justify-content: center; padding-top: 5vh;">
+
+    <div style="width: 100%; max-width: 650px;">
+
+        <div class="dashboard-header" style="margin-bottom: 30px;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="width: 6px; height: 35px; background-color: #3b82f6; border-radius: 4px;"></div>
+                <div>
+                    <h1 style="color: var(--bg-dark); margin: 0;">Aplică pentru rolul de Administrator</h1>
+                    <p style="color: var(--text-muted); margin: 5px 0 0 0;">Platforma noastră recompensează cetățenii activi și corecți.</p>
+                </div>
+            </div>
         </div>
 
-        <div class="year-filter">
-            <label for="hartaYearSelect">Coeficienți oficiali pentru:</label>
-            <select id="hartaYearSelect" onchange="incarcaDateHarta()">
-                <option value="2026">2026</option>
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-                <option value="2022">2022</option>
-            </select>
+        <div id="boxMesajEligibilitate" style="margin-bottom: 20px; display: block;">
+            <div style="background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; padding: 20px; border-radius: 8px;">
+                <p style="color: #334155; margin: 0; font-weight: 500;"><i class="fa-solid fa-spinner fa-spin"></i> Se verifică istoricul tău...</p>
+            </div>
         </div>
-    </div>
 
-    <div class="premium-dark-panel" style="padding: 15px;">
-        <div id="map" style="height: 650px; width: 100%; border-radius: 12px; z-index: 1;"></div>
+        <div id="boxFormularAplicatie" class="premium-dark-panel" style="padding: 30px; display: none; width: 100%; box-sizing: border-box;">
+            <h3 style="color: #3b82f6; margin-top: 0; margin-bottom: 20px;"><i class="fa-solid fa-award"></i> Felicitări! Ești eligibil.</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 20px;">Ai dovedit că ești un cetățean de încredere (minim 10 crime raportate cu peste 70% acuratețe). Scrie mai jos de ce îți dorești să devii administrator pe CrimeRate RO.</p>
+
+            <div class="input-group">
+                <label style="color: #e2e8f0; margin-bottom: 10px; display: block;">Motivația ta (minim 20 caractere):</label>
+                <textarea id="motivatieAdmin" rows="5" style="width: 100%; padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: white; font-family: inherit; resize: vertical; box-sizing: border-box;" placeholder="Doresc să devin admin pentru că..."></textarea>
+            </div>
+
+            <button onclick="trimiteAplicatieAdmin()" class="btn-primary" style="margin-top: 20px; width: 100%; background: #3b82f6; padding: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; color: white;">
+                <i class="fa-solid fa-paper-plane"></i> Trimite Aplicația
+            </button>
+        </div>
+
     </div>
 </main>
 
@@ -121,7 +132,6 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -32,26 +32,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const loginItem = document.getElementById("loginMenuItem");
     const logoutItem = document.getElementById("logoutMenuItem");
     const raportareItem = document.getElementById("raportareMenuItem");
-    const adminItem = document.getElementById("adminMenuItem"); // <--- NOU
+    const adminItem = document.getElementById("adminMenuItem");
 
     const profileHeaderBtn = document.getElementById("profileHeaderBtn");
     const profileHeaderText = document.getElementById("profileHeaderText");
 
+    const aplicaAdminItem = document.getElementById("aplicaAdminMenuItem");
+    const adminSupremItem = document.getElementById("adminSupremMenuItem");
+
     if (userData) {
-        // --- UTILIZATOR LOGAT ---
         const user = JSON.parse(userData);
         if(loginItem) loginItem.style.display = "none";
         if(logoutItem) logoutItem.style.display = "block";
         if(raportareItem) raportareItem.style.display = "block";
         if(menuNotificari) menuNotificari.style.display = "block";
 
-        // --- VERIFICARE ROL PENTRU ADMIN ---
+        if(aplicaAdminItem) {
+            aplicaAdminItem.style.display = (user.rol === "CETATEAN") ? "block" : "none";
+        }
         if(adminItem) {
-            if (user.rol === "ADMIN") {
-                adminItem.style.display = "block"; // Doar adminul vede scutul
-            } else {
-                adminItem.style.display = "none";
-            }
+            adminItem.style.display = (user.rol === "ADMIN" || user.rol === "ADMIN_SUPREM") ? "block" : "none";
+        }
+        if(adminSupremItem) {
+            adminSupremItem.style.display = (user.rol === "ADMIN_SUPREM") ? "block" : "none";
         }
 
         if(profileHeaderText) profileHeaderText.innerText = "Contul Meu";
@@ -61,12 +64,13 @@ document.addEventListener("DOMContentLoaded", () => {
             profileHeaderBtn.onclick = null;
         }
     } else {
-        // --- VIZITATOR (GUEST) ---
         if(loginItem) loginItem.style.display = "block";
         if(logoutItem) logoutItem.style.display = "none";
         if(raportareItem) raportareItem.style.display = "none";
         if(adminItem) adminItem.style.display = "none";
         if(menuNotificari) menuNotificari.style.display = "none";
+        if(aplicaAdminItem) aplicaAdminItem.style.display = "none";
+        if(adminSupremItem) adminSupremItem.style.display = "none";
 
         if(profileHeaderText) profileHeaderText.innerText = "Guest";
         if(profileHeaderBtn) {
@@ -81,8 +85,9 @@ document.addEventListener("DOMContentLoaded", () => {
         incarcaDashboard();
         populeazaDropdownJudete();
     }
-    // Dacă suntem pe pagina de Admin, încărcăm tabelul
     if (document.getElementById("tabelAdminBody")) incarcaIncidenteAdmin();
+    if (document.getElementById("boxFormularAplicatie")) incarcaPaginaAplicaAdmin();
+    if (document.getElementById("gridAplicatii")) incarcaAplicatiiSuprem();
 });
 
 // ==========================================
@@ -919,4 +924,167 @@ async function respingeIncident(id) {
             } catch (e) { showToast("Eroare de conexiune la server!", "error"); }
         }
     });
+}
+
+// ==========================================
+// --- 11. ZONA APLICARE ADMIN (CETĂȚEAN) ---
+// ==========================================
+const API_APLICATII = "http://localhost:8080/api/aplicatii";
+
+async function incarcaPaginaAplicaAdmin() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) return window.location.href = "login.html";
+
+    const boxMesaj = document.getElementById("boxMesajEligibilitate");
+    const boxForm = document.getElementById("boxFormularAplicatie");
+
+    try {
+        const res = await fetch(`${API_APLICATII}/eligibilitate/${user.id}`);
+        const text = await res.text();
+
+        if (res.ok && text === "ELIGIBIL") {
+            boxMesaj.style.display = "none";
+            boxForm.style.display = "block";
+        } else {
+            // Aici am schimbat color: #334155
+            boxMesaj.innerHTML = `<div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px;"><h3 style="color: #ef4444; margin-top: 0;"><i class="fa-solid fa-triangle-exclamation"></i> Acces Restricționat</h3><p style="color: #334155; margin-bottom: 0; font-weight: 500;">${text}</p></div>`;
+            boxMesaj.style.display = "block";
+            boxForm.style.display = "none";
+        }
+    } catch (e) {
+        console.error("Eroare eligibilitate:", e);
+    }
+}
+
+async function trimiteAplicatieAdmin() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const motivatie = document.getElementById("motivatieAdmin").value;
+
+    if (!motivatie || motivatie.length < 20) {
+        return showToast("Te rugăm să scrii o motivație de minim 20 de caractere!", "error");
+    }
+
+    try {
+        const res = await fetch(`${API_APLICATII}/aplica/${user.id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ motivatie: motivatie })
+        });
+
+        showToast(await res.text(), res.ok ? "success" : "error");
+
+        if (res.ok) {
+            document.getElementById("boxFormularAplicatie").style.display = "none";
+            // Aici am schimbat color: #334155 pentru mesajul de succes
+            document.getElementById("boxMesajEligibilitate").innerHTML = `<div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 20px; border-radius: 8px;"><h3 style="color: #10b981; margin-top: 0;"><i class="fa-solid fa-check"></i> Aplicație Trimisă</h3><p style="color: #334155; margin-bottom: 0; font-weight: 500;">Cererea ta a fost trimisă cu succes. Urmărește clopoțelul de notificări pentru răspuns!</p></div>`;
+            document.getElementById("boxMesajEligibilitate").style.display = "block";
+        }
+    } catch (e) {
+        showToast("Eroare de conexiune la server!", "error");
+    }
+}
+// ==========================================
+// --- 12. PANOUL SUPREM (ADMIN SUPREM) ---
+// ==========================================
+async function incarcaAplicatiiSuprem() {
+    const container = document.getElementById("gridAplicatii");
+    if (!container) return;
+
+    try {
+        const res = await fetch(`${API_APLICATII}/in-asteptare`);
+        if (res.ok) {
+            const aplicatii = await res.json();
+            container.innerHTML = "";
+
+            if (aplicatii.length === 0) {
+                container.innerHTML = `<div style="width: 100%; text-align: center; color: #10b981; padding: 40px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16,185,129,0.3);">Nu există nicio cerere în așteptare în acest moment!</div>`;
+                return;
+            }
+
+            aplicatii.forEach(app => {
+                const dataFormata = new Date(app.dataAplicare).toLocaleString("ro-RO");
+
+                // Tăiem textul dacă e prea lung
+                let motivatieScurta = app.motivatie.length > 90 ? app.motivatie.substring(0, 90) + "..." : app.motivatie;
+
+                // Curățăm textul pentru a nu strica funcția onclick
+                const numeSafe = app.numeUtilizator.replace(/'/g, "\\'");
+                const motivatieSafe = app.motivatie.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                // Cardul are acum flex: 1 1 350px și max-width: 500px ca să arate bine și singur
+                container.innerHTML += `
+                    <div class="premium-dark-panel"
+                         style="flex: 1 1 350px; max-width: 500px; padding: 25px; cursor: pointer; transition: all 0.2s ease; border-top: 4px solid #8b5cf6; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;"
+                         onclick="deschideModalReview(${app.id}, '${numeSafe}', '${motivatieSafe}', '${dataFormata}')"
+                         onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.4)';"
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                                <h3 style="margin: 0; color: #e2e8f0; font-size: 1.25rem;">${app.numeUtilizator}</h3>
+                                <span style="font-size: 0.8rem; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 6px;">${dataFormata.split(',')[0]}</span>
+                            </div>
+                            <p style="color: #cbd5e1; font-size: 0.95rem; font-style: italic; line-height: 1.6; margin: 0;">"${motivatieScurta}"</p>
+                        </div>
+
+                        <div style="margin-top: 25px; text-align: right; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                            <span style="color: #8b5cf6; font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-magnifying-glass"></i> Deschide cererea</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    } catch (e) {
+        container.innerHTML = `<div style="width: 100%; text-align: center; color: #ef4444; padding: 20px;">Eroare la încărcarea datelor de pe server.</div>`;
+    }
+}
+
+let aplicatieCurentaId = null;
+
+function deschideModalReview(id, nume, motivatie, data) {
+    aplicatieCurentaId = id;
+
+    // Umplem datele in modal
+    document.getElementById("reviewNume").innerText = nume;
+    document.getElementById("reviewData").innerText = data;
+    document.getElementById("reviewMotivatie").innerText = motivatie;
+
+    // Setăm funcțiile pentru butoanele de decizie
+    document.getElementById("btnAproba").onclick = () => proceseazaCerere('APROBA');
+    document.getElementById("btnRespinge").onclick = () => proceseazaCerere('RESPINGE');
+
+    // Afișăm modalul (Pop-up-ul)
+    document.getElementById("reviewModal").style.display = "flex";
+}
+
+function inchideModalReview() {
+    document.getElementById("reviewModal").style.display = "none";
+    aplicatieCurentaId = null;
+}
+
+async function proceseazaCerere(actiune) {
+    if (!aplicatieCurentaId) return;
+
+    // Încă mai cerem mesajul text pentru decizie
+    const mesajRaspuns = prompt(`Scrie un mesaj pentru cetățean:\n(Acesta va fi trimis sub formă de notificare)`, `Ai fost ${actiune === 'APROBA' ? 'promovat' : 'respins'}!`);
+
+    if (mesajRaspuns === null) return; // Utilizatorul a dat "Cancel"
+    if (mesajRaspuns.trim() === "") return showToast("Trebuie să introduci un motiv!", "error");
+
+    try {
+        const response = await fetch(`${API_APLICATII}/raspunde/${aplicatieCurentaId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ actiune: actiune, mesaj: mesajRaspuns })
+        });
+
+        showToast(await response.text(), response.ok ? 'success' : 'error');
+
+        if (response.ok) {
+            inchideModalReview(); // Închidem pop-up-ul automat
+            incarcaAplicatiiSuprem(); // Reîmprospătăm grid-ul de carduri
+        }
+    } catch (e) {
+        showToast("Eroare de conexiune la server!", "error");
+    }
 }

@@ -82,9 +82,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (document.getElementById("profNume")) incarcaDateProfil();
     if (document.getElementById("globalYearSelect")) {
-        incarcaDashboard();
-        populeazaDropdownJudete();
+        incarcaDashboard(); // Încarcă graficele
+    if (document.getElementById("tabelYearSelect")) incarcaTabelSelectat(); // Încarcă tabelul
+        populeazaDropdownJudete(); // Încarcă graficul cu linie
     }
+
     if (document.getElementById("tabelAdminBody")) incarcaIncidenteAdmin();
     if (document.getElementById("boxFormularAplicatie")) incarcaPaginaAplicaAdmin();
     if (document.getElementById("gridAplicatii")) incarcaAplicatiiSuprem();
@@ -330,19 +332,16 @@ let evolutieChartInstance = null;
 
 async function incarcaDashboard() {
     const anCurent = parseInt(document.getElementById("globalYearSelect").value);
-    const anPrecedent = anCurent - 1;
 
     try {
         const resCurent = await fetch(`${API_ISTORIC}/an/${anCurent}`);
-        const resPrecedent = await fetch(`${API_ISTORIC}/an/${anPrecedent}`);
 
         if (resCurent.ok) {
             const dateCurente = await resCurent.json();
             if (!dateCurente || dateCurente.length === 0) return;
 
-            const datePrecedente = resPrecedent.ok ? await resPrecedent.json() : [];
+            // Desenăm DOAR graficele de top, nu mai atingem tabelul aici
             deseneazaTopBottom(dateCurente);
-            populeazaTabel(dateCurente, datePrecedente);
         }
     } catch (err) { console.error(err); }
 }
@@ -454,11 +453,31 @@ async function incarcaGraficEvolutie() {
     } catch (e) { console.error(e); }
 }
 
+async function incarcaTabelSelectat() {
+    const selectTabel = document.getElementById("tabelYearSelect");
+    if (!selectTabel) return;
+
+    const anCurent = parseInt(selectTabel.value);
+    const anPrecedent = anCurent - 1;
+
+    try {
+        const resCurent = await fetch(`${API_ISTORIC}/an/${anCurent}`);
+        const resPrecedent = await fetch(`${API_ISTORIC}/an/${anPrecedent}`);
+
+        if (resCurent.ok) {
+            const dateCurente = await resCurent.json();
+            const datePrecedente = resPrecedent.ok ? await resPrecedent.json() : [];
+
+            // Populăm DOAR tabelul, nu atingem graficele
+            populeazaTabel(dateCurente, datePrecedente);
+        }
+    } catch (err) { console.error(err); }
+}
+
 // ==========================================
-// --- 6. ZONA HARTĂ INTERACTIVĂ (LEAFLET) ---
+// --- 6. HARTĂ (Leaflet) ---
 // ==========================================
 let mapInstance = null;
-let geoJsonLayer = null;
 let markersLayer = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -482,21 +501,10 @@ function initializeazaHarta() {
 }
 
 async function incarcaDateHarta() {
-    const anSelectat = document.getElementById("hartaYearSelect").value;
-    let dateCoeficienti = [];
+    const selectElement = document.getElementById("hartaYearSelect");
+    if (!selectElement) return;
 
-    try {
-        const resCoef = await fetch(`${API_ISTORIC}/an/${anSelectat}`);
-        if(resCoef.ok) dateCoeficienti = await resCoef.json();
-    } catch(e) { console.error(e); }
-
-    try {
-        const resGeo = await fetch("https://raw.githubusercontent.com/bumbu/romania-geojson/master/romania-counties.geojson");
-        if(resGeo.ok) {
-            const geoData = await resGeo.json();
-            deseneazaPoligoane(geoData, dateCoeficienti);
-        }
-    } catch(e) { console.error(e); }
+    const anSelectat = parseInt(selectElement.value);
 
     try {
         const resIncidente = await fetch(`${API_INCIDENTE}/aprobate`);
@@ -504,49 +512,11 @@ async function incarcaDateHarta() {
             const incidenteTotiAnii = await resIncidente.json();
             const incidenteFiltrate = incidenteTotiAnii.filter(inc => {
                 if (!inc.dataRaportare) return true;
-                const anIncident = new Date(inc.dataRaportare).getFullYear();
-                return anIncident === parseInt(anSelectat);
+                return new Date(inc.dataRaportare).getFullYear() === anSelectat;
             });
             punePionezePeHarta(incidenteFiltrate);
         }
-    } catch (e) { console.error(e); }
-}
-
-function normalizareNume(nume) {
-    if (!nume) return "";
-    return nume.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-}
-
-function deseneazaPoligoane(geoData, coeficientiBD) {
-    if (geoJsonLayer) { mapInstance.removeLayer(geoJsonLayer); }
-
-    geoJsonLayer = L.geoJSON(geoData, {
-        style: function (feature) {
-            const numeGeoOriginal = feature.properties.NAME_1 || feature.properties.name || "";
-            const numeGeo = normalizareNume(numeGeoOriginal);
-            const judetBD = coeficientiBD.find(j => normalizareNume(j.numeJudet) === numeGeo);
-
-            let culoare = '#94a3b8';
-            if (judetBD) {
-                if (judetBD.domeniuIncadrare === 'RIDICAT') culoare = '#ef4444';
-                else if (judetBD.domeniuIncadrare === 'MEDIU') culoare = '#f59e0b';
-                else if (judetBD.domeniuIncadrare === 'SCAZUT') culoare = '#10b981';
-            }
-
-            return { fillColor: culoare, weight: 2, opacity: 1, color: 'white', dashArray: '3', fillOpacity: 0.5 };
-        },
-        onEachFeature: function (feature, layer) {
-            const numeGeoOriginal = feature.properties.NAME_1 || feature.properties.name || "";
-            const numeGeo = normalizareNume(numeGeoOriginal);
-            const judetBD = coeficientiBD.find(j => normalizareNume(j.numeJudet) === numeGeo);
-
-            if (judetBD) {
-                layer.bindTooltip(`<strong>Județul ${judetBD.numeJudet}</strong><br>Coeficient: ${judetBD.coeficient}<br>Risc: ${judetBD.domeniuIncadrare}`, { sticky: true });
-            } else {
-                layer.bindTooltip(`<strong>Județul ${numeGeoOriginal}</strong><br>Nu există date`, { sticky: true });
-            }
-        }
-    }).addTo(mapInstance);
+    } catch (e) { console.error("Eroare fetch incidente:", e); }
 }
 
 function punePionezePeHarta(incidente) {
@@ -559,9 +529,9 @@ function punePionezePeHarta(incidente) {
 
             const popupContinut = `
                 <div class="popup-custom">
-                    <h3>${inc.tipInfractiune || 'Incident'}</h3>
-                    <p>${inc.descriere || 'Fără descriere'}</p>
-                    <span class="data-incident"><i class="fa-solid fa-clock"></i> ${dataInc}</span>
+                    <h3 style="margin:0; color:#3b82f6;">${inc.tipInfractiune || 'Incident'}</h3>
+                    <p style="margin:8px 0;">${inc.descriere || 'Fără descriere'}</p>
+                    <span style="font-size:0.8rem; color:#94a3b8;"><i class="fa-solid fa-clock"></i> ${dataInc}</span>
                 </div>
             `;
 
@@ -570,7 +540,6 @@ function punePionezePeHarta(incidente) {
         }
     });
 }
-
 // ==========================================
 // --- 7. ZONA RAPORTARE INCIDENT ---
 // ==========================================
@@ -653,10 +622,18 @@ async function trimiteRaport() {
     }
 
     const idLocalitate = document.getElementById("rapLocalitateId").value;
-    const tipInfractiune = document.getElementById("rapTip").value;
+    let tipInfractiune = document.getElementById("rapTip").value;
     const descriere = document.getElementById("rapDescriere").value;
     const lat = document.getElementById("rapLat").value;
     const lng = document.getElementById("rapLng").value;
+
+    // LOGICA NOUĂ: Dacă a ales "Altele", preluăm valoarea din input-ul text
+    if (tipInfractiune === "Altele") {
+        tipInfractiune = document.getElementById("rapAltTip").value.trim();
+        if (!tipInfractiune) {
+            return showToast("Te rugăm să specifici tipul infracțiunii!", "error");
+        }
+    }
 
     if (!tipInfractiune) return showToast("Alege tipul infracțiunii!", "error");
     if (!idLocalitate) return showToast("Caută și selectează un oraș!", "error");
@@ -680,11 +657,26 @@ async function trimiteRaport() {
 
         if (response.ok) {
             showToast(await response.text(), "success");
+
+            // Resetare formular
             document.getElementById("rapTip").value = "";
+
+            // Resetăm și ascundem câmpul specific pentru "Altele"
+            const inputAltTip = document.getElementById("rapAltTip");
+            if(inputAltTip) inputAltTip.value = "";
+            const containerAltTip = document.getElementById("containerAltTip");
+            if(containerAltTip) containerAltTip.style.display = "none";
+
             document.getElementById("rapDescriere").value = "";
+            document.getElementById("rapSearchOras").value = "";
             document.getElementById("rapLocalitateId").value = "";
             document.getElementById("rapOrasSelectatText").style.display = "none";
-            if (rapMarker) miniMapInstance.removeLayer(rapMarker);
+
+            // Resetare hartă
+            if (typeof rapMarker !== 'undefined' && rapMarker) {
+                miniMapInstance.removeLayer(rapMarker);
+                rapMarker = null; // e bine să îl și golim
+            }
             document.getElementById("rapLat").value = "";
             document.getElementById("rapLng").value = "";
         } else {

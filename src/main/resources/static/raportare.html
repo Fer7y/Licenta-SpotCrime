@@ -9,6 +9,44 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        .autocomplete-results {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            position: absolute;
+            width: 100%;
+            background: #1e293b; /* Fundal dark-blue */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin-top: -5px; /* Să se lipească frumos de input */
+        }
+
+        .autocomplete-results li {
+            padding: 12px 20px;
+            color: #ffffff !important; /* TEXT ALB FORȚAT */
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .autocomplete-results li:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-results li:hover {
+            background: #3b82f6; /* Albastru aprins la trecerea cu mouse-ul */
+            color: #ffffff !important;
+        }
+    </style>
 </head>
 <body>
 
@@ -28,11 +66,11 @@
         <li>
             <a href="harta.html">
                 <i class="fa-solid fa-map-location-dot"></i>
-                <span class="text">Harta Interactivă</span>
+                <span class="text">Map</span>
             </a>
         </li>
-        <li>
-            <a href="raportare.html" style="color: var(--accent);">
+        <li id="raportareMenuItem" style="display: none;">
+            <a href="raportare.html" style="color: #f59e0b;">
                 <i class="fa-solid fa-bullhorn"></i>
                 <span class="text">Raportează Incident</span>
             </a>
@@ -56,7 +94,6 @@
                 <span class="text">Devino Admin</span>
             </a>
         </li>
-
         <li id="adminSupremMenuItem" style="display: none;">
             <a href="admin_suprem.html" style="color: #8b5cf6;">
                 <i class="fa-solid fa-crown"></i>
@@ -76,56 +113,73 @@
     </div>
 </nav>
 
-<main class="main-content">
-    <div class="dashboard-header">
-        <div>
-            <h1 style="color: var(--bg-dark);">Raportează un Incident</h1>
-            <p style="color: var(--text-muted); margin-top: 5px;">Ajută comunitatea raportând incidentele la care ai fost martor.</p>
-        </div>
+<main class="main-content" style="padding-top: 40px; padding-bottom: 40px;">
+
+    <div class="dashboard-header" style="text-align: center; margin-bottom: 35px; display: flex; flex-direction: column; align-items: center;">
+        <h1 style="color: var(--bg-dark); font-size: 2.2rem; display: flex; align-items: center; gap: 12px; margin: 0;">
+            <i class="fa-solid fa-bullhorn" style="color: #3b82f6;"></i> Raportează un Incident
+        </h1>
+        <p style="color: var(--text-muted); font-size: 1.05rem; margin-top: 8px;">Ajută comunitatea raportând incidentele la care ai fost martor.</p>
     </div>
 
-    <div class="premium-dark-panel" style="max-width: 800px; margin: 0 auto; padding: 30px;">
+    <div class="premium-dark-panel" style="max-width: 800px; margin: 0 auto; padding: 40px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); border-top: 4px solid #3b82f6; background: #0f172a;">
 
-        <div class="input-group">
-            <label style="color: var(--text-main);">Tip Infracțiune <span style="color: #ef4444;">*</span></label>
-            <select id="rapTip" style="width: 100%; padding: 15px 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.25); color: var(--text-main); font-family: 'Inter'; font-size: 1rem; outline: none;">
-                <option value="" style="color: black;">Alege tipul infracțiunii...</option>
-                <option value="Furt" style="color: black;">Furt</option>
-                <option value="Tâlhărie" style="color: black;">Tâlhărie</option>
-                <option value="Furt din auto" style="color: black;">Furt din auto</option>
-                <option value="Vandalism" style="color: black;">Vandalism / Distrugere</option>
-                <option value="Violență" style="color: black;">Agresiune fizică</option>
-                <option value="Tulburarea liniștii" style="color: black;">Tulburarea liniștii publice</option>
-                <option value="Altele" style="color: black;">Altele</option>
+        <div class="input-group" style="margin-bottom: 25px;">
+            <label style="color: white; font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <i class="fa-solid fa-list" style="color: #3b82f6;"></i> Tip Infracțiune <span style="color: #ef4444;">*</span>
+            </label>
+            <select id="rapTip" onchange="toggleAltTip(this.value)" style="width: 100%; padding: 15px 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15); background: #1e293b; color: white; font-family: 'Inter', sans-serif; font-size: 1rem; outline: none; cursor: pointer; transition: border-color 0.2s;">
+                <option value="" style="color: #94a3b8;">Alege tipul infracțiunii...</option>
+                <option value="Furt">Furt</option>
+                <option value="Tâlhărie">Tâlhărie</option>
+                <option value="Furt din auto">Furt din auto</option>
+                <option value="Vandalism">Vandalism / Distrugere</option>
+                <option value="Violență">Agresiune fizică</option>
+                <option value="Tulburarea liniștii">Tulburarea liniștii publice</option>
+                <option value="Altele">Altele</option>
             </select>
         </div>
 
-        <div class="input-group" style="margin-top: 20px;">
-            <label style="color: var(--text-main);">Oraș / Localitate <span style="color: #ef4444;">*</span></label>
-            <div class="search-container">
-                <input type="text" id="rapSearchOras" placeholder="🔍 Caută orașul..." oninput="cautaOrasRaportare(this.value)">
+        <div class="input-group" id="containerAltTip" style="display: none; margin-bottom: 25px;">
+            <label style="color: white; font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <i class="fa-solid fa-pen" style="color: #a855f7;"></i> Specifică tipul infracțiunii <span style="color: #ef4444;">*</span>
+            </label>
+            <input type="text" id="rapAltTip" placeholder="Scrie aici tipul incidentului..." style="width: 100%; padding: 15px 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15); background: #1e293b; color: white; font-family: 'Inter', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.2s;">
+        </div>
+
+        <div class="input-group" style="margin-bottom: 25px;">
+            <label style="color: white; font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <i class="fa-solid fa-city" style="color: #f59e0b;"></i> Oraș / Localitate <span style="color: #ef4444;">*</span>
+            </label>
+            <div class="search-container" style="position: relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 2;"></i>
+                <input type="text" id="rapSearchOras" placeholder="Caută orașul..." oninput="cautaOrasRaportare(this.value)" style="width: 100%; padding: 15px 20px 15px 45px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15); background: #1e293b; color: white; font-family: 'Inter', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.2s; position: relative;">
                 <ul id="rapSearchResults" class="autocomplete-results"></ul>
             </div>
             <input type="hidden" id="rapLocalitateId">
-            <p id="rapOrasSelectatText" style="color: #10b981; font-size: 0.95rem; display: none; margin-top: 5px; font-weight: 500;"><i class="fa-solid fa-check-circle"></i> Oraș selectat: <span></span></p>
+            <p id="rapOrasSelectatText" style="color: #10b981; font-size: 0.95rem; display: none; margin-top: 8px; font-weight: 500;"><i class="fa-solid fa-check-circle"></i> Oraș selectat: <span style="color: white;"></span></p>
         </div>
 
-        <div class="input-group" style="margin-top: 20px;">
-            <label style="color: var(--text-main);">Selectează locația exactă pe hartă <span style="color: #ef4444;">*</span></label>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">Dă click pe hartă pentru a plasa pioneza roșie exact în locul incidentului.</p>
+        <div class="input-group" style="margin-bottom: 25px;">
+            <label style="color: white; font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                <i class="fa-solid fa-location-dot" style="color: #ef4444;"></i> Selectează locația exactă pe hartă <span style="color: #ef4444;">*</span>
+            </label>
+            <p style="font-size: 0.9rem; color: #94a3b8; margin: 0 0 15px 0;"><i class="fa-solid fa-circle-info" style="margin-right: 5px;"></i>Dă click pe hartă pentru a plasa pioneza roșie exact în locul incidentului.</p>
 
-            <div id="miniMap" style="height: 350px; width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); z-index: 1;"></div>
+            <div id="miniMap" style="height: 350px; width: 100%; border-radius: 10px; border: 2px solid rgba(255,255,255,0.05); z-index: 1;"></div>
 
             <input type="hidden" id="rapLat">
             <input type="hidden" id="rapLng">
         </div>
 
-        <div class="input-group" style="margin-top: 20px;">
-            <label style="color: var(--text-main);">Descriere suplimentară (Opțional)</label>
-            <textarea id="rapDescriere" rows="4" placeholder="Oferă mai multe detalii despre ce s-a întâmplat..." style="width: 100%; padding: 15px 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0, 0, 0, 0.25); color: var(--text-main); font-family: 'Inter'; font-size: 1rem; outline: none; resize: vertical;"></textarea>
+        <div class="input-group" style="margin-bottom: 30px;">
+            <label style="color: white; font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <i class="fa-solid fa-comment-dots" style="color: #10b981;"></i> Descriere suplimentară <span style="color: #94a3b8; font-weight: normal; font-size: 0.85rem;">(Opțional)</span>
+            </label>
+            <textarea id="rapDescriere" rows="4" placeholder="Oferă mai multe detalii despre ce s-a întâmplat..." style="width: 100%; padding: 15px 20px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.15); background: #1e293b; color: white; font-family: 'Inter', sans-serif; font-size: 1rem; outline: none; resize: vertical; transition: border-color 0.2s;"></textarea>
         </div>
 
-        <button class="btn-premium" style="width: 100%; margin-top: 30px; padding: 15px; font-size: 1.1rem;" onclick="trimiteRaport()">
+        <button class="btn-premium" style="width: 100%; padding: 18px; font-size: 1.15rem; font-weight: 600; border-radius: 10px; background: #3b82f6; color: white; border: none; cursor: pointer; transition: background 0.3s; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);" onclick="trimiteRaport()" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
             <i class="fa-solid fa-paper-plane" style="margin-right: 8px;"></i> Trimite Raportul
         </button>
     </div>
@@ -141,6 +195,17 @@
         </div>
     </div>
 </div>
+
+<script>
+    function toggleAltTip(valoare) {
+        const container = document.getElementById('containerAltTip');
+        if (valoare === 'Altele') {
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    }
+</script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>

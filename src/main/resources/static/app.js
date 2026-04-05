@@ -418,6 +418,10 @@ async function populeazaDropdownJudete() {
             judete.sort((a, b) => (a.numeJudet || "").localeCompare(b.numeJudet || "")).forEach(j => {
                 select.innerHTML += `<option value="${j.idJudet}">${j.numeJudet}</option>`;
             });
+
+            // Adaugam manual Municipiul Bucuresti la finalul listei
+            select.innerHTML += `<option value="48">Municipiul București</option>`;
+
             if (judete.length > 0) incarcaGraficEvolutie();
         }
     } catch (e) { console.error(e); }

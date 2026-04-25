@@ -5,6 +5,9 @@ const API_URL = "http://localhost:8080/api/auth";
 const API_INCIDENTE = "http://localhost:8080/api/incidente";
 const API_ISTORIC = "http://localhost:8080/api/istoric";
 const API_ABONAMENTE = "http://localhost:8080/api/abonamente";
+const API_ADMIN = "http://localhost:8080/api/admin";
+const API_NOTIF = "http://localhost:8080/api/notificari";
+const API_APLICATII = "http://localhost:8080/api/aplicatii";
 
 // ==========================================
 // --- FUNCTIE PENTRU POP-UP FRUMOS (TOAST) ---
@@ -33,6 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const logoutItem = document.getElementById("logoutMenuItem");
     const raportareItem = document.getElementById("raportareMenuItem");
     const adminItem = document.getElementById("adminMenuItem");
+    const predictiiItem = document.getElementById("predictiiMenuItem");
+    const exportItem = document.getElementById("exportMenuItem");
 
     const profileHeaderBtn = document.getElementById("profileHeaderBtn");
     const profileHeaderText = document.getElementById("profileHeaderText");
@@ -47,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if(raportareItem) raportareItem.style.display = "block";
         if(menuNotificari) menuNotificari.style.display = "block";
 
+
         if(aplicaAdminItem) {
             aplicaAdminItem.style.display = (user.rol === "CETATEAN") ? "block" : "none";
         }
@@ -56,6 +62,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if(adminSupremItem) {
             adminSupremItem.style.display = (user.rol === "ADMIN_SUPREM") ? "block" : "none";
         }
+
+        if(predictiiItem) predictiiItem.style.display = "block";
+        if(exportItem) exportItem.style.display = "block";
 
         if(profileHeaderText) profileHeaderText.innerText = "Contul Meu";
         if(profileHeaderBtn) {
@@ -71,6 +80,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if(menuNotificari) menuNotificari.style.display = "none";
         if(aplicaAdminItem) aplicaAdminItem.style.display = "none";
         if(adminSupremItem) adminSupremItem.style.display = "none";
+        if(predictiiItem) predictiiItem.style.display = "none";
+        if(exportItem) exportItem.style.display = "none";
 
         if(profileHeaderText) profileHeaderText.innerText = "Guest";
         if(profileHeaderBtn) {
@@ -80,16 +91,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Apelează funcțiile specifice paginilor doar dacă găsește elementele lor HTML
     if (document.getElementById("profNume")) incarcaDateProfil();
     if (document.getElementById("globalYearSelect")) {
-        incarcaDashboard(); // Încarcă graficele
-    if (document.getElementById("tabelYearSelect")) incarcaTabelSelectat(); // Încarcă tabelul
-        populeazaDropdownJudete(); // Încarcă graficul cu linie
+        incarcaDashboard();
+        if (document.getElementById("tabelYearSelect")) incarcaTabelSelectat();
+        populeazaDropdownJudete();
     }
-
+    if (document.getElementById("map")) {
+        initializeazaHarta();
+        incarcaDateHarta();
+    }
+    if (document.getElementById("miniMap")) initMiniMap();
     if (document.getElementById("tabelAdminBody")) incarcaIncidenteAdmin();
     if (document.getElementById("boxFormularAplicatie")) incarcaPaginaAplicaAdmin();
     if (document.getElementById("gridAplicatii")) incarcaAplicatiiSuprem();
+
+    // NOU: Dacă suntem pe pagina de predicții, pornim inteligența artificială
+    if (document.getElementById("loadingPredictii")) incarcaDatePredictiiDinamice();
 });
 
 // ==========================================
@@ -97,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 function logout() {
     localStorage.removeItem("user");
-    window.location.href = "index.html"; // Ducem Guest-ul pe pagina principală
+    window.location.href = "index.html";
 }
 
 function toggleForms() {
@@ -339,8 +358,6 @@ async function incarcaDashboard() {
         if (resCurent.ok) {
             const dateCurente = await resCurent.json();
             if (!dateCurente || dateCurente.length === 0) return;
-
-            // Desenăm DOAR graficele de top, nu mai atingem tabelul aici
             deseneazaTopBottom(dateCurente);
         }
     } catch (err) { console.error(err); }
@@ -419,7 +436,6 @@ async function populeazaDropdownJudete() {
                 select.innerHTML += `<option value="${j.idJudet}">${j.numeJudet}</option>`;
             });
 
-            // Adaugam manual Municipiul Bucuresti la finalul listei
             select.innerHTML += `<option value="48">Municipiul București</option>`;
 
             if (judete.length > 0) incarcaGraficEvolutie();
@@ -471,8 +487,6 @@ async function incarcaTabelSelectat() {
         if (resCurent.ok) {
             const dateCurente = await resCurent.json();
             const datePrecedente = resPrecedent.ok ? await resPrecedent.json() : [];
-
-            // Populăm DOAR tabelul, nu atingem graficele
             populeazaTabel(dateCurente, datePrecedente);
         }
     } catch (err) { console.error(err); }
@@ -483,13 +497,6 @@ async function incarcaTabelSelectat() {
 // ==========================================
 let mapInstance = null;
 let markersLayer = null;
-
-document.addEventListener("DOMContentLoaded", () => {
-    if (document.getElementById("map")) {
-        initializeazaHarta();
-        incarcaDateHarta();
-    }
-});
 
 function initializeazaHarta() {
     try {
@@ -549,12 +556,6 @@ function punePionezePeHarta(incidente) {
 // ==========================================
 let miniMapInstance = null;
 let rapMarker = null;
-
-document.addEventListener("DOMContentLoaded", () => {
-    if (document.getElementById("miniMap")) {
-        initMiniMap();
-    }
-});
 
 function initMiniMap() {
     miniMapInstance = L.map('miniMap').setView([45.9000, 24.9668], 6);
@@ -631,7 +632,6 @@ async function trimiteRaport() {
     const lat = document.getElementById("rapLat").value;
     const lng = document.getElementById("rapLng").value;
 
-    // LOGICA NOUĂ: Dacă a ales "Altele", preluăm valoarea din input-ul text
     if (tipInfractiune === "Altele") {
         tipInfractiune = document.getElementById("rapAltTip").value.trim();
         if (!tipInfractiune) {
@@ -661,25 +661,19 @@ async function trimiteRaport() {
 
         if (response.ok) {
             showToast(await response.text(), "success");
-
-            // Resetare formular
             document.getElementById("rapTip").value = "";
-
-            // Resetăm și ascundem câmpul specific pentru "Altele"
             const inputAltTip = document.getElementById("rapAltTip");
             if(inputAltTip) inputAltTip.value = "";
             const containerAltTip = document.getElementById("containerAltTip");
             if(containerAltTip) containerAltTip.style.display = "none";
-
             document.getElementById("rapDescriere").value = "";
             document.getElementById("rapSearchOras").value = "";
             document.getElementById("rapLocalitateId").value = "";
             document.getElementById("rapOrasSelectatText").style.display = "none";
 
-            // Resetare hartă
             if (typeof rapMarker !== 'undefined' && rapMarker) {
                 miniMapInstance.removeLayer(rapMarker);
-                rapMarker = null; // e bine să îl și golim
+                rapMarker = null;
             }
             document.getElementById("rapLat").value = "";
             document.getElementById("rapLng").value = "";
@@ -690,11 +684,10 @@ async function trimiteRaport() {
         showToast("Eroare de conexiune la server!", "error");
     }
 }
+
 // ==========================================
 // --- 8. ZONA PENTRU PANOUL DE ADMIN ---
 // ==========================================
-const API_ADMIN = "http://localhost:8080/api/admin";
-
 async function incarcaIncidenteAdmin() {
     const tbody = document.getElementById("tabelAdminBody");
     if (!tbody) return;
@@ -702,7 +695,6 @@ async function incarcaIncidenteAdmin() {
     try {
         const response = await fetch(`${API_ADMIN}/incidente-in-asteptare`);
         const incidente = await response.json();
-
         tbody.innerHTML = "";
 
         if (incidente.length === 0) {
@@ -712,7 +704,6 @@ async function incarcaIncidenteAdmin() {
 
         incidente.forEach(inc => {
             const dataFormata = new Date(inc.dataRaportare).toLocaleString("ro-RO");
-
             tbody.innerHTML += `
                 <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                     <td style="padding: 15px;">${dataFormata}</td>
@@ -738,26 +729,20 @@ async function incarcaIncidenteAdmin() {
     }
 }
 
-
 // ==========================================
 // --- LOGICA NOTIFICĂRI (SIDEBAR + MODAL) ---
 // ==========================================
-const API_NOTIF = "http://localhost:8080/api/notificari";
-
-// Verificăm notificările la fiecare 30 de secunde dacă utilizatorul este logat
 if (localStorage.getItem("user")) {
     setInterval(verificaNotificariNoi, 30000);
-    setTimeout(verificaNotificariNoi, 1000); // Prima verificare la încărcarea paginii
+    setTimeout(verificaNotificariNoi, 1000);
 }
 
-// Funcția care aprinde bulina roșie în sidebar
 async function verificaNotificariNoi() {
     const userData = localStorage.getItem("user");
     if (!userData) return;
     const user = JSON.parse(userData);
 
     try {
-        // Chemăm endpoint-ul de "necitite" pe care l-am făcut în Java
         const res = await fetch(`${API_NOTIF}/utilizator/${user.id}/necitite`);
         if (res.ok) {
             const necitite = await res.json();
@@ -771,40 +756,29 @@ async function verificaNotificariNoi() {
                 }
             }
         }
-    } catch (e) {
-        console.error("Eroare la verificarea notificărilor:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
-// Funcția care deschide/închide Pop-up-ul (Modalul)
 async function toggleNotificari(event) {
-    if (event) event.preventDefault(); // Prevenim scroll-ul paginii la click
+    if (event) event.preventDefault();
 
     const modal = document.getElementById("notifModal");
     const userData = localStorage.getItem("user");
     if (!userData || !modal) return;
-
     const user = JSON.parse(userData);
 
     if (modal.style.display === "block") {
         modal.style.display = "none";
     } else {
         modal.style.display = "block";
-
-        // Încărcăm mesajele în interiorul modalului
         await incarcaToateNotificarile(user.id);
-
-        // După ce utilizatorul a deschis lista, marcăm totul ca CITIT în backend
         try {
             await fetch(`${API_NOTIF}/citeste-toate/${user.id}`, { method: 'PUT' });
-            verificaNotificariNoi(); // Resetăm bulina roșie la 0
-        } catch (e) {
-            console.error("Eroare la marcarea notificărilor ca citite", e);
-        }
+            verificaNotificariNoi();
+        } catch (e) { console.error(e); }
     }
 }
 
-// Funcția care randează efectiv mesajele în Modal
 async function incarcaToateNotificarile(userId) {
     const container = document.getElementById("listaNotificariContent");
     if (!container) return;
@@ -821,9 +795,7 @@ async function incarcaToateNotificarile(userId) {
             }
 
             list.forEach(n => {
-                // Formatăm data frumos
                 const dataStr = n.dataNotificare ? new Date(n.dataNotificare).toLocaleString("ro-RO") : "Recent";
-
                 container.innerHTML += `
                     <div class="notif-item ${n.citit ? '' : 'necitit'}" style="padding: 12px; margin-bottom: 8px; border-radius: 6px; background: rgba(255,255,255,0.05); border-left: 4px solid ${n.citit ? '#3b82f6' : '#ef4444'};">
                         <p style="margin: 0; font-size: 0.9rem; color: #f8fafc;">${n.mesaj}</p>
@@ -838,16 +810,14 @@ async function incarcaToateNotificarile(userId) {
         container.innerHTML = "<p style='color: #ef4444;'>Eroare la încărcarea datelor.</p>";
     }
 }
+
 // ==========================================
 // --- 10. LOGICA POP-UP CONFIRMARE ADMIN ---
 // ==========================================
-
-// Funcția universală care deschide fereastra pe centru
 function deschidePopUpConfirmare(config) {
     const modal = document.getElementById("confirmModal");
-    if (!modal) return; // Siguranță în caz că nu ești pe pagina de admin
+    if (!modal) return;
 
-    // Setăm textele și culorile din configurație
     document.getElementById("confirmTitle").innerText = config.titlu;
     document.getElementById("confirmMessage").innerText = config.mesaj;
 
@@ -859,64 +829,52 @@ function deschidePopUpConfirmare(config) {
     successBtn.innerText = config.textButon;
     successBtn.style.backgroundColor = config.culoare;
 
-    // Afișăm modalul (folosim flex pentru centrare perfectă)
     modal.style.display = "flex";
 
-    // --- GESTIONARE CLICK-URI ---
-
-    // 1. Când apasă CONFIRMĂ
     successBtn.onclick = async () => {
-        modal.style.display = "none"; // Închidem pop-up-ul
-        showToast("Se procesează...", "info"); // Feedback vizual rapid
-        await config.actiuneFinala(); // Executăm apelul la API
+        modal.style.display = "none";
+        showToast("Se procesează...", "info");
+        await config.actiuneFinala();
     };
 
-    // 2. Când apasă RENUNȚĂ
     document.getElementById("confirmCancelBtn").onclick = () => {
         modal.style.display = "none";
     };
 
-    // 3. Opțional: Închide dacă dă click pe fundalul negru
     modal.onclick = (e) => {
         if (e.target === modal) modal.style.display = "none";
     };
 }
 
-// ==========================================
-// --- ACTUALIZARE FUNCȚII BUTOANE TABEL ---
-// ==========================================
-
-// Butonul VERDE - Aprobă
 async function aprobaIncident(id) {
     deschidePopUpConfirmare({
         titlu: "Aprobare Incident",
         mesaj: "Ești sigur că vrei să CONFIRMI acest incident? Va apărea pe hartă și cetățenii abonați vor primi notificări.",
-        iconHtml: '<i class="fa-solid fa-circle-check"></i>', // Bifă FontAwesome
-        culoare: "#10b981", // Verde Premium
+        iconHtml: '<i class="fa-solid fa-circle-check"></i>',
+        culoare: "#10b981",
         textButon: "Aprobă",
         actiuneFinala: async () => {
             try {
                 const response = await fetch(`${API_ADMIN}/incidente/${id}/aproba`, { method: 'PUT' });
                 showToast(await response.text(), response.ok ? 'success' : 'error');
-                if (response.ok) incarcaIncidenteAdmin(); // Reîncărcăm tabelul
+                if (response.ok) incarcaIncidenteAdmin();
             } catch (e) { showToast("Eroare de conexiune la server!", "error"); }
         }
     });
 }
 
-// Butonul ROȘU - Respinge
 async function respingeIncident(id) {
     deschidePopUpConfirmare({
         titlu: "Respingere Incident",
         mesaj: "Acest raport va fi marcat ca FALS. Sigur vrei să îl respingi? Nu va fi vizibil pe hartă.",
-        iconHtml: '<i class="fa-solid fa-circle-xmark"></i>', // X FontAwesome
-        culoare: "#ef4444", // Roșu Alertă
+        iconHtml: '<i class="fa-solid fa-circle-xmark"></i>',
+        culoare: "#ef4444",
         textButon: "Respinge",
         actiuneFinala: async () => {
             try {
                 const response = await fetch(`${API_ADMIN}/incidente/${id}/respinge`, { method: 'PUT' });
                 showToast(await response.text(), response.ok ? 'success' : 'error');
-                if (response.ok) incarcaIncidenteAdmin(); // Reîncărcăm tabelul
+                if (response.ok) incarcaIncidenteAdmin();
             } catch (e) { showToast("Eroare de conexiune la server!", "error"); }
         }
     });
@@ -925,8 +883,6 @@ async function respingeIncident(id) {
 // ==========================================
 // --- 11. ZONA APLICARE ADMIN (CETĂȚEAN) ---
 // ==========================================
-const API_APLICATII = "http://localhost:8080/api/aplicatii";
-
 async function incarcaPaginaAplicaAdmin() {
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user) return window.location.href = "login.html";
@@ -942,14 +898,11 @@ async function incarcaPaginaAplicaAdmin() {
             boxMesaj.style.display = "none";
             boxForm.style.display = "block";
         } else {
-            // Aici am schimbat color: #334155
             boxMesaj.innerHTML = `<div style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px;"><h3 style="color: #ef4444; margin-top: 0;"><i class="fa-solid fa-triangle-exclamation"></i> Acces Restricționat</h3><p style="color: #334155; margin-bottom: 0; font-weight: 500;">${text}</p></div>`;
             boxMesaj.style.display = "block";
             boxForm.style.display = "none";
         }
-    } catch (e) {
-        console.error("Eroare eligibilitate:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 async function trimiteAplicatieAdmin() {
@@ -971,14 +924,12 @@ async function trimiteAplicatieAdmin() {
 
         if (res.ok) {
             document.getElementById("boxFormularAplicatie").style.display = "none";
-            // Aici am schimbat color: #334155 pentru mesajul de succes
             document.getElementById("boxMesajEligibilitate").innerHTML = `<div style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; padding: 20px; border-radius: 8px;"><h3 style="color: #10b981; margin-top: 0;"><i class="fa-solid fa-check"></i> Aplicație Trimisă</h3><p style="color: #334155; margin-bottom: 0; font-weight: 500;">Cererea ta a fost trimisă cu succes. Urmărește clopoțelul de notificări pentru răspuns!</p></div>`;
             document.getElementById("boxMesajEligibilitate").style.display = "block";
         }
-    } catch (e) {
-        showToast("Eroare de conexiune la server!", "error");
-    }
+    } catch (e) { showToast("Eroare de conexiune la server!", "error"); }
 }
+
 // ==========================================
 // --- 12. PANOUL SUPREM (ADMIN SUPREM) ---
 // ==========================================
@@ -999,15 +950,10 @@ async function incarcaAplicatiiSuprem() {
 
             aplicatii.forEach(app => {
                 const dataFormata = new Date(app.dataAplicare).toLocaleString("ro-RO");
-
-                // Tăiem textul dacă e prea lung
                 let motivatieScurta = app.motivatie.length > 90 ? app.motivatie.substring(0, 90) + "..." : app.motivatie;
-
-                // Curățăm textul pentru a nu strica funcția onclick
                 const numeSafe = app.numeUtilizator.replace(/'/g, "\\'");
                 const motivatieSafe = app.motivatie.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
-                // Cardul are acum flex: 1 1 350px și max-width: 500px ca să arate bine și singur
                 container.innerHTML += `
                     <div class="premium-dark-panel"
                          style="flex: 1 1 350px; max-width: 500px; padding: 25px; cursor: pointer; transition: all 0.2s ease; border-top: 4px solid #8b5cf6; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box;"
@@ -1039,17 +985,11 @@ let aplicatieCurentaId = null;
 
 function deschideModalReview(id, nume, motivatie, data) {
     aplicatieCurentaId = id;
-
-    // Umplem datele in modal
     document.getElementById("reviewNume").innerText = nume;
     document.getElementById("reviewData").innerText = data;
     document.getElementById("reviewMotivatie").innerText = motivatie;
-
-    // Setăm funcțiile pentru butoanele de decizie
     document.getElementById("btnAproba").onclick = () => proceseazaCerere('APROBA');
     document.getElementById("btnRespinge").onclick = () => proceseazaCerere('RESPINGE');
-
-    // Afișăm modalul (Pop-up-ul)
     document.getElementById("reviewModal").style.display = "flex";
 }
 
@@ -1061,10 +1001,9 @@ function inchideModalReview() {
 async function proceseazaCerere(actiune) {
     if (!aplicatieCurentaId) return;
 
-    // Încă mai cerem mesajul text pentru decizie
     const mesajRaspuns = prompt(`Scrie un mesaj pentru cetățean:\n(Acesta va fi trimis sub formă de notificare)`, `Ai fost ${actiune === 'APROBA' ? 'promovat' : 'respins'}!`);
 
-    if (mesajRaspuns === null) return; // Utilizatorul a dat "Cancel"
+    if (mesajRaspuns === null) return;
     if (mesajRaspuns.trim() === "") return showToast("Trebuie să introduci un motiv!", "error");
 
     try {
@@ -1077,10 +1016,116 @@ async function proceseazaCerere(actiune) {
         showToast(await response.text(), response.ok ? 'success' : 'error');
 
         if (response.ok) {
-            inchideModalReview(); // Închidem pop-up-ul automat
-            incarcaAplicatiiSuprem(); // Reîmprospătăm grid-ul de carduri
+            inchideModalReview();
+            incarcaAplicatiiSuprem();
+        }
+    } catch (e) { showToast("Eroare de conexiune la server!", "error"); }
+}
+
+// ==========================================
+// --- 13. PREDICȚII AI (PAGINA SEPARATĂ) ---
+// ==========================================
+let chartPredictiiInstance = null;
+
+async function incarcaDatePredictiiDinamice() {
+    const loadingDiv = document.getElementById("loadingPredictii");
+    const contentDiv = document.getElementById("continutPredictii");
+
+    if (!loadingDiv || !contentDiv) return;
+
+    try {
+        const response = await fetch('http://localhost:8080/api/predictii/dinamic');
+
+        if (response.ok) {
+            const datePredictii = await response.json();
+
+            loadingDiv.style.display = "none";
+            contentDiv.style.display = "block";
+
+            populeazaTabelPredictii(datePredictii);
+            deseneazaGraficPredictii(datePredictii);
+        } else {
+            loadingDiv.innerHTML = `<h2 style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Eroare la rularea modelelor AI.</h2>`;
         }
     } catch (e) {
-        showToast("Eroare de conexiune la server!", "error");
+        console.error("Eroare rețea:", e);
+        loadingDiv.innerHTML = `<h2 style="color: #ef4444;"><i class="fa-solid fa-server"></i> Eroare de conexiune la serverul Java.</h2>`;
     }
+}
+
+function populeazaTabelPredictii(date) {
+    const tbody = document.getElementById("tabelPredictiiBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+
+    date.forEach(rand => {
+        const culoareCoeficient = rand.coeficient_prezis > 100 ? '#ef4444' : (rand.coeficient_prezis > 75 ? '#f59e0b' : '#10b981');
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td style="font-weight: 600; color: white;">${rand.nume_judet}</td>
+            <td style="color: #94a3b8;">${rand.an_vizat}</td>
+            <td style="color: ${culoareCoeficient}; font-weight: 700; font-family: monospace; font-size: 1.05rem;">
+                ${Number(rand.coeficient_prezis).toFixed(2)}
+            </td>
+            <td style="color: #64748b; font-size: 0.9rem;">${rand.data_generare}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function deseneazaGraficPredictii(date) {
+    const ctx = document.getElementById('predictiiChart');
+    if (!ctx) return;
+
+    const top10 = date.slice(0, 10);
+    const labels = top10.map(d => d.nume_judet);
+    const dataValues = top10.map(d => Number(d.coeficient_prezis).toFixed(2));
+
+    if (chartPredictiiInstance) {
+        chartPredictiiInstance.destroy();
+    }
+
+    chartPredictiiInstance = new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Coeficient Prezis',
+                data: dataValues,
+                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                borderColor: '#3b82f6',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { ticks: { color: '#cbd5e1' }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ==========================================
+// --- 14. EXPORT DATE (PAGINA SEPARATĂ) ---
+// ==========================================
+function declanseazaExport() {
+    const format = document.getElementById("exportFormat").value;
+    const an = document.getElementById("exportAn").value;
+
+    if (!format) {
+        return showToast("Te rugăm să selectezi un format!", "error");
+    }
+
+    showToast("Se pregătește fișierul...", "info");
+
+    // Construim link-ul către ruta ta nouă (folosind /api/exporturi)
+    const url = `http://localhost:8080/api/exporturi/descarca?format=${format}&an=${an}`;
+
+    // Deschidem link-ul. Browserul va salva fișierul imediat.
+    window.open(url, "_blank");
 }

@@ -8,6 +8,7 @@ const API_ABONAMENTE = "http://localhost:8080/api/abonamente";
 const API_ADMIN = "http://localhost:8080/api/admin";
 const API_NOTIF = "http://localhost:8080/api/notificari";
 const API_APLICATII = "http://localhost:8080/api/aplicatii";
+const API_UTILIZATORI = "http://localhost:8080/api/utilizatori";
 
 // ==========================================
 // --- FUNCTIE PENTRU POP-UP FRUMOS (TOAST) ---
@@ -105,7 +106,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("miniMap")) initMiniMap();
     if (document.getElementById("tabelAdminBody")) incarcaIncidenteAdmin();
     if (document.getElementById("boxFormularAplicatie")) incarcaPaginaAplicaAdmin();
-    if (document.getElementById("gridAplicatii")) incarcaAplicatiiSuprem();
+    if (document.getElementById("gridAplicatii"))
+    {
+            incarcaAplicatiiSuprem();
+            incarcaListaUtilizatori();
+        }
 
     // NOU: Dacă suntem pe pagina de predicții, pornim inteligența artificială
     if (document.getElementById("loadingPredictii")) incarcaDatePredictiiDinamice();
@@ -1128,4 +1133,100 @@ function declanseazaExport() {
 
     // Deschidem link-ul. Browserul va salva fișierul imediat.
     window.open(url, "_blank");
+}
+// ==========================================
+// --- 15. GESTIUNE UTILIZATORI (ADMIN SUPREM) ---
+// ==========================================
+async function incarcaListaUtilizatori() {
+    const tbody = document.getElementById("tabelUtilizatoriBody");
+    if (!tbody) return;
+
+    try {
+        const response = await fetch(API_UTILIZATORI);
+        if (response.ok) {
+            const utilizatori = await response.json();
+            tbody.innerHTML = "";
+
+            if (utilizatori.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Nu a fost găsit niciun utilizator.</td></tr>`;
+                return;
+            }
+
+            utilizatori.forEach(user => {
+                // Nu edităm Adminul Suprem
+                if (user.rol === "ADMIN_SUPREM") return;
+
+                let butoane = "";
+                let badgeRol = "";
+
+                // Formatăm data de înregistrare (ex: 25.04.2026)
+                const dataFormatata = user.dataInregistrare
+                    ? new Date(user.dataInregistrare).toLocaleDateString("ro-RO")
+                    : "N/A";
+
+                if (user.rol === "CETATEAN") {
+                    badgeRol = `<span class="badge" style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 4px;">Cetățean</span>`;
+                    butoane = `<button onclick="schimbaRol(${user.id}, 'ADMIN')" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; width: 160px;"><i class="fa-solid fa-arrow-up"></i> Promovează Admin</button>`;
+                } else if (user.rol === "ADMIN") {
+                    badgeRol = `<span class="badge" style="background-color: #f59e0b; color: white; padding: 4px 8px; border-radius: 4px;">Admin</span>`;
+                    butoane = `<button onclick="schimbaRol(${user.id}, 'CETATEAN')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; width: 160px;"><i class="fa-solid fa-arrow-down"></i> Revocă Cetățean</button>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 15px; font-weight: 500;">${user.numeComplet}</td>
+                        <td style="padding: 15px; color: #94a3b8;">${dataFormatata}</td> <td style="padding: 15px;">${badgeRol}</td>
+                        <td style="padding: 15px; text-align: right;">${butoane}</td>
+                    </tr>
+                `;
+            });
+        }
+    } catch (e) {
+        console.error("Eroare la încărcarea utilizatorilor:", e);
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ef4444; padding: 20px;">Eroare la conectarea cu serverul!</td></tr>`;
+    }
+}
+
+async function schimbaRol(userId, nouRol) {
+    // 1. Pregătim aspectul vizual al ferestrei în funcție de butonul apăsat
+    let configPopUp = {};
+
+    if (nouRol === 'ADMIN') {
+        configPopUp = {
+            titlu: "Promovare la Admin",
+            mesaj: "Ești sigur că vrei să promovezi acest utilizator? Va avea acces la panoul de administrare pentru validarea incidentelor de pe hartă.",
+            iconHtml: '<i class="fa-solid fa-shield-halved fa-beat-fade"></i>',
+            culoare: "#10b981", // Verde
+            textButon: "Da, Promovează"
+        };
+    } else {
+        configPopUp = {
+            titlu: "Revocare Acces",
+            mesaj: "Ești sigur că vrei să îi retragi drepturile de Admin? Va redeveni un simplu cetățean și va pierde accesul la panou.",
+            iconHtml: '<i class="fa-solid fa-user-minus"></i>',
+            culoare: "#ef4444", // Roșu
+            textButon: "Da, Revocă"
+        };
+    }
+
+    // 2. Definim ce se întâmplă DUPĂ ce Adminul Suprem dă click pe confirmare
+    configPopUp.actiuneFinala = async () => {
+        try {
+            const response = await fetch(`${API_UTILIZATORI}/${userId}/schimba-rol?nouRol=${nouRol}`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                showToast(await response.text(), 'success');
+                incarcaListaUtilizatori(); // Reîncărcăm tabelul
+            } else {
+                showToast(await response.text(), 'error');
+            }
+        } catch (e) {
+            showToast("Eroare de conexiune la server!", "error");
+        }
+    };
+
+    // 3. Afișăm pop-up-ul frumos pe ecran apelând funcția generală deja existentă în codul tău
+    deschidePopUpConfirmare(configPopUp);
 }

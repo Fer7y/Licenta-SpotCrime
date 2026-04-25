@@ -31,4 +31,13 @@ public class UtilizatorController {
             return ResponseEntity.notFound().build();
         }
     }
+    @PutMapping("/{id}/schimba-rol")
+    public ResponseEntity<String> schimbaRol(@PathVariable Integer id, @RequestParam String nouRol) {
+        try {
+            utilizatorService.schimbaRolUtilizator(id, nouRol);
+            return ResponseEntity.ok("Rolul a fost actualizat cu succes!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

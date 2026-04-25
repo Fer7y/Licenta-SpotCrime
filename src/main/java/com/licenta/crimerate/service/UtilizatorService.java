@@ -41,4 +41,23 @@ public class UtilizatorService {
         dto.setDataInregistrare(utilizator.getDataInregistrare());
         return dto;
     }
+
+    public void schimbaRolUtilizator(Integer id, String nouRol) {
+        Utilizator utilizator = utilizatorRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Utilizatorul nu a fost găsit!"));
+
+        // Măsură de securitate: Adminul Suprem nu își poate pierde funcția
+        if ("ADMIN_SUPREM".equals(utilizator.getRol())) {
+            throw new RuntimeException("Rolul de ADMIN_SUPREM nu poate fi modificat!");
+        }
+
+        // Permitem doar schimbarea în ADMIN sau CETATEAN
+        if ("ADMIN".equals(nouRol) || "CETATEAN".equals(nouRol)) {
+            utilizator.setRol(nouRol);
+            utilizatorRepository.save(utilizator);
+        } else {
+            throw new RuntimeException("Rol invalid!");
+        }
+    }
 }
+

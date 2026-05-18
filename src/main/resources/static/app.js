@@ -53,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if(raportareItem) raportareItem.style.display = "block";
         if(menuNotificari) menuNotificari.style.display = "block";
 
-
         if(aplicaAdminItem) {
             aplicaAdminItem.style.display = (user.rol === "CETATEAN") ? "block" : "none";
         }
@@ -92,7 +91,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Apelează funcțiile specifice paginilor doar dacă găsește elementele lor HTML
     if (document.getElementById("profNume")) incarcaDateProfil();
     if (document.getElementById("globalYearSelect")) {
         incarcaDashboard();
@@ -106,13 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("miniMap")) initMiniMap();
     if (document.getElementById("tabelAdminBody")) incarcaIncidenteAdmin();
     if (document.getElementById("boxFormularAplicatie")) incarcaPaginaAplicaAdmin();
-    if (document.getElementById("gridAplicatii"))
-    {
-            incarcaAplicatiiSuprem();
-            incarcaListaUtilizatori();
-        }
 
-    // NOU: Dacă suntem pe pagina de predicții, pornim inteligența artificială
+    if (document.getElementById("gridAplicatii")) {
+        incarcaAplicatiiSuprem();
+        incarcaListaUtilizatori();
+    }
+
     if (document.getElementById("loadingPredictii")) incarcaDatePredictiiDinamice();
 });
 
@@ -353,6 +350,7 @@ async function salveazaParola() {
 let top5ChartInstance = null;
 let bottom5ChartInstance = null;
 let evolutieChartInstance = null;
+let comparatieChartInstance = null; // Variabila pentru graficul de comparatie
 
 async function incarcaDashboard() {
     const anCurent = parseInt(document.getElementById("globalYearSelect").value);
@@ -430,20 +428,38 @@ function populeazaTabel(dateCurente, datePrecedente) {
     });
 }
 
+// Aceasta functie a fost modificata sa populeze toate cele 3 liste de judete
 async function populeazaDropdownJudete() {
     try {
         const res = await fetch(`${API_ISTORIC}/an/2025`);
         if (res.ok) {
             const judete = await res.json();
-            const select = document.getElementById("judetEvolutieSelect");
-            select.innerHTML = "";
+
+            const selectEvolutie = document.getElementById("judetEvolutieSelect");
+            const selectComp1 = document.getElementById("judetComparatie1Select");
+            const selectComp2 = document.getElementById("judetComparatie2Select");
+
+            let optionsHtml = "";
             judete.sort((a, b) => (a.numeJudet || "").localeCompare(b.numeJudet || "")).forEach(j => {
-                select.innerHTML += `<option value="${j.idJudet}">${j.numeJudet}</option>`;
+                // Adaugam optiunile cu background negru pentru Safari/Chrome styling curat
+                optionsHtml += `<option value="${j.idJudet}" style="background: #1e293b; color: white;">${j.numeJudet}</option>`;
             });
 
-            select.innerHTML += `<option value="48">Municipiul București</option>`;
+            optionsHtml += `<option value="48" style="background: #1e293b; color: white;">Municipiul București</option>`;
 
-            if (judete.length > 0) incarcaGraficEvolutie();
+            if (selectEvolutie) selectEvolutie.innerHTML = optionsHtml;
+            if (selectComp1) selectComp1.innerHTML = optionsHtml;
+            if (selectComp2) selectComp2.innerHTML = optionsHtml;
+
+            if (judete.length > 0) {
+                if (selectEvolutie) incarcaGraficEvolutie();
+
+                // Pentru comparatie selectam automat Bucuresti ca fiind al doilea (daca exista elementele pe pagina)
+                if (selectComp1 && selectComp2) {
+                    selectComp2.value = "48"; // 48 e id-ul de obicei pentru Bucuresti in baza ta de date
+                    incarcaGraficComparatie();
+                }
+            }
         }
     } catch (e) { console.error(e); }
 }
@@ -476,6 +492,92 @@ async function incarcaGraficEvolutie() {
             });
         }
     } catch (e) { console.error(e); }
+}
+
+// LOGICA NOUA PENTRU COMPARATIE
+async function incarcaGraficComparatie() {
+    const select1 = document.getElementById("judetComparatie1Select");
+    const select2 = document.getElementById("judetComparatie2Select");
+    if (!select1 || !select2) return;
+
+    const id1 = select1.value;
+    const nume1 = select1.options[select1.selectedIndex].text;
+    const id2 = select2.value;
+    const nume2 = select2.options[select2.selectedIndex].text;
+
+    try {
+        const [res1, res2] = await Promise.all([
+            fetch(`${API_ISTORIC}/judet/${id1}`),
+            fetch(`${API_ISTORIC}/judet/${id2}`)
+        ]);
+
+        if (res1.ok && res2.ok) {
+            const istoric1 = await res1.json();
+            const istoric2 = await res2.json();
+
+            // Gasim cea mai recenta inregistrare pentru a afisa numarul sus
+            const recent1 = istoric1.length > 0 ? istoric1.reduce((prev, current) => (prev.an > current.an) ? prev : current) : {coeficient: '-'};
+            const recent2 = istoric2.length > 0 ? istoric2.reduce((prev, current) => (prev.an > current.an) ? prev : current) : {coeficient: '-'};
+
+            document.getElementById("numeComp1").innerText = nume1;
+            document.getElementById("rataComp1").innerText = recent1.coeficient;
+            document.getElementById("numeComp2").innerText = nume2;
+            document.getElementById("rataComp2").innerText = recent2.coeficient;
+
+            // Facem o lista unica cu toti anii gasiti in ambele seturi de date pentru a alinia graficul
+            const aniUnici = [...new Set([...istoric1.map(d => d.an), ...istoric2.map(d => d.an)])].sort();
+
+            const data1 = aniUnici.map(an => {
+                const record = istoric1.find(d => d.an === an);
+                return record ? Number(record.coeficient) : null;
+            });
+
+            const data2 = aniUnici.map(an => {
+                const record = istoric2.find(d => d.an === an);
+                return record ? Number(record.coeficient) : null;
+            });
+
+            const ctx = document.getElementById('comparatieChart').getContext('2d');
+            if (comparatieChartInstance) comparatieChartInstance.destroy();
+
+            comparatieChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: aniUnici,
+                    datasets: [
+                        {
+                            label: nume1,
+                            data: data1,
+                            borderColor: '#3b82f6', // Albastru
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            spanGaps: true // Daca lipsesc ani, uneste linia
+                        },
+                        {
+                            label: nume2,
+                            data: data2,
+                            borderColor: '#f59e0b', // Portocaliu
+                            backgroundColor: 'transparent',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            spanGaps: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true, labels: { color: '#cbd5e1', font: { family: 'Inter', size: 13 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#cbd5e1' }, grid: { display: false } },
+                        y: { ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        }
+    } catch (e) { console.error("Eroare la incarcarea datelor pentru comparatie:", e); }
 }
 
 async function incarcaTabelSelectat() {
@@ -1128,12 +1230,11 @@ function declanseazaExport() {
 
     showToast("Se pregătește fișierul...", "info");
 
-    // Construim link-ul către ruta ta nouă (folosind /api/exporturi)
     const url = `http://localhost:8080/api/exporturi/descarca?format=${format}&an=${an}`;
 
-    // Deschidem link-ul. Browserul va salva fișierul imediat.
     window.open(url, "_blank");
 }
+
 // ==========================================
 // --- 15. GESTIUNE UTILIZATORI (ADMIN SUPREM) ---
 // ==========================================
@@ -1159,7 +1260,6 @@ async function incarcaListaUtilizatori() {
                 let butoane = "";
                 let badgeRol = "";
 
-                // Formatăm data de înregistrare (ex: 25.04.2026)
                 const dataFormatata = user.dataInregistrare
                     ? new Date(user.dataInregistrare).toLocaleDateString("ro-RO")
                     : "N/A";
@@ -1188,7 +1288,6 @@ async function incarcaListaUtilizatori() {
 }
 
 async function schimbaRol(userId, nouRol) {
-    // 1. Pregătim aspectul vizual al ferestrei în funcție de butonul apăsat
     let configPopUp = {};
 
     if (nouRol === 'ADMIN') {
@@ -1196,7 +1295,7 @@ async function schimbaRol(userId, nouRol) {
             titlu: "Promovare la Admin",
             mesaj: "Ești sigur că vrei să promovezi acest utilizator? Va avea acces la panoul de administrare pentru validarea incidentelor de pe hartă.",
             iconHtml: '<i class="fa-solid fa-shield-halved fa-beat-fade"></i>',
-            culoare: "#10b981", // Verde
+            culoare: "#10b981",
             textButon: "Da, Promovează"
         };
     } else {
@@ -1204,12 +1303,11 @@ async function schimbaRol(userId, nouRol) {
             titlu: "Revocare Acces",
             mesaj: "Ești sigur că vrei să îi retragi drepturile de Admin? Va redeveni un simplu cetățean și va pierde accesul la panou.",
             iconHtml: '<i class="fa-solid fa-user-minus"></i>',
-            culoare: "#ef4444", // Roșu
+            culoare: "#ef4444",
             textButon: "Da, Revocă"
         };
     }
 
-    // 2. Definim ce se întâmplă DUPĂ ce Adminul Suprem dă click pe confirmare
     configPopUp.actiuneFinala = async () => {
         try {
             const response = await fetch(`${API_UTILIZATORI}/${userId}/schimba-rol?nouRol=${nouRol}`, {
@@ -1218,7 +1316,7 @@ async function schimbaRol(userId, nouRol) {
 
             if (response.ok) {
                 showToast(await response.text(), 'success');
-                incarcaListaUtilizatori(); // Reîncărcăm tabelul
+                incarcaListaUtilizatori();
             } else {
                 showToast(await response.text(), 'error');
             }
@@ -1227,6 +1325,5 @@ async function schimbaRol(userId, nouRol) {
         }
     };
 
-    // 3. Afișăm pop-up-ul frumos pe ecran apelând funcția generală deja existentă în codul tău
     deschidePopUpConfirmare(configPopUp);
 }

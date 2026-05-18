@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrimeRate RO - Dashboard</title>
+    <title>StopCrime RO - Dashboard</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -60,6 +60,7 @@
                 <i class="fa-solid fa-crown"></i>
                 <span class="text">Panou Suprem</span>
             </a>
+        </li>
         <li id="predictiiMenuItem" style="display: none;">
             <a href="predictii.html">
                 <i class="fa-solid fa-robot"></i>
@@ -72,9 +73,8 @@
                 <span class="text">Export Date</span>
             </a>
         </li>
-        </li>
         <li id="loginMenuItem"><a href="login.html"><i class="fa-solid fa-right-to-bracket"></i><span class="text">Autentificare</span></a></li>
-        <li id="logoutMenuItem">
+        <li id="logoutMenuItem" style="display: none;">
             <a href="#" onclick="logout()">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 <span class="text">Deconectare</span>
@@ -83,7 +83,7 @@
     </ul>
 
     <div class="sidebar-footer">
-        <span class="small-text">CrimeRate RO</span>
+        <span class="small-text">StopCrime RO</span>
     </div>
 </nav>
 
@@ -97,7 +97,7 @@
 
         <div class="year-filter">
             <label for="globalYearSelect">Analiză pentru anul:</label>
-            <select id="globalYearSelect" onchange="incarcaDashboard()">
+            <select id="globalYearSelect" onchange="incarcaDashboard()" style="cursor: pointer;">
                 <option value="2025">2025</option>
                 <option value="2024">2024</option>
                 <option value="2023">2023</option>
@@ -130,7 +130,7 @@
     <div class="chart-card full-width" style="margin-top: 25px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h3>📈 Evoluție Istorică</h3>
-            <select id="judetEvolutieSelect" onchange="incarcaGraficEvolutie()">
+            <select id="judetEvolutieSelect" onchange="incarcaGraficEvolutie()" style="cursor: pointer;">
                 <option value="1">Alba</option>
                 <option value="48">Municipiul București</option>
             </select>
@@ -139,12 +139,42 @@
     </div>
 
     <div class="chart-card full-width" style="margin-top: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+            <h3 style="margin: 0;">⚖️ Comparație Directă</h3>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="judetComparatie1Select" onchange="incarcaGraficComparatie()" style="padding: 8px 12px; border-radius: 8px; background: #1e293b; color: white; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; outline: none; font-weight: 500;">
+                </select>
+                <span style="color: var(--text-muted); font-weight: bold; font-size: 0.9rem;">VS</span>
+                <select id="judetComparatie2Select" onchange="incarcaGraficComparatie()" style="padding: 8px 12px; border-radius: 8px; background: #1e293b; color: white; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; outline: none; font-weight: 500;">
+                </select>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.15); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="text-align: center;">
+                <span id="numeComp1" style="color: #3b82f6; font-weight: 600; display: block; margin-bottom: 5px; font-size: 0.95rem;">Județ 1</span>
+                <span id="rataComp1" style="font-size: 1.5rem; font-weight: 700; color: white; font-family: monospace;">-</span>
+                <span style="color: var(--text-muted); font-size: 0.8rem; display: block;">Ultimul Coeficient</span>
+            </div>
+            <div style="width: 1px; background: rgba(255,255,255,0.1);"></div>
+            <div style="text-align: center;">
+                <span id="numeComp2" style="color: #f59e0b; font-weight: 600; display: block; margin-bottom: 5px; font-size: 0.95rem;">Județ 2</span>
+                <span id="rataComp2" style="font-size: 1.5rem; font-weight: 700; color: white; font-family: monospace;">-</span>
+                <span style="color: var(--text-muted); font-size: 0.8rem; display: block;">Ultimul Coeficient</span>
+            </div>
+        </div>
+
+        <canvas id="comparatieChart" height="100"></canvas>
+    </div>
+
+    <div class="chart-card full-width" style="margin-top: 25px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h3 style="margin: 0;">📊 Tabel Detaliat Județe (vs. Anul Precedent)</h3>
 
             <div class="year-filter" style="margin: 0;">
                 <label for="tabelYearSelect" style="color: var(--text-muted); margin-right: 8px;">An tabel:</label>
-                <select id="tabelYearSelect" onchange="incarcaTabelSelectat()">
+                <select id="tabelYearSelect" onchange="incarcaTabelSelectat()" style="cursor: pointer;">
                     <option value="2025">2025</option>
                     <option value="2024">2024</option>
                     <option value="2023">2023</option>
